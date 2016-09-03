@@ -1,4 +1,8 @@
+package process;
 import java.util.concurrent.CountDownLatch;
+
+import node.Node;
+import node.NodeAbstract;
 
 public class Nodes extends NodeAbstract implements Runnable{
 	private int countedEchos = 0;

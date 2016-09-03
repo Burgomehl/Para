@@ -5,6 +5,7 @@ import java.util.concurrent.CountDownLatch;
 import node.Node;
 import node.NodeAbstract;
 
+@Deprecated
 public class Processor extends NodeAbstract implements Runnable, Node {
 
 	public Processor(String name, boolean initiator, CountDownLatch startLatch) {
