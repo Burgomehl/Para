@@ -7,7 +7,7 @@ import process.Nodes;
 public class Start {
 
 	public static void main(String[] args) {
-		int nodes = 2;
+		int nodes = 5;
 		CountDownLatch latch = new CountDownLatch(nodes);
 		Nodes init = new Nodes("Initiator", true, latch);
 		Nodes node1 = new Nodes("Node1", false, latch);
