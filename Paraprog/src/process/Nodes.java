@@ -33,13 +33,26 @@ public class Nodes extends NodeAbstract {
 			wakeupNeighbour = neighbour;
 			start();
 		}
-		yield();
-		testFinish();		
+		notifyAll();
 	}
 
 	@Override
 	public void run() {
 		runHelper();
+		synchronized (this) {
+			while(countedEchos.get() < neighbours.size()){
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			if (initiator) {
+				System.out.println("Fertig: " + data);
+			} else {
+				wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""));
+			}
+		}
 
 	}
 
@@ -56,17 +69,6 @@ public class Nodes extends NodeAbstract {
 			e1.printStackTrace();
 		}
 	}
-	
-	private void testFinish(){
-		System.out.println(this + ": " + countedEchos.get() + "/" + neighbours.size());
-		if (countedEchos.get() >= neighbours.size()) {
-			if (initiator) {
-				System.out.println("Fertig: " + data);
-			} else {
-				wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""));
-			}
-		}
-	}
 
 	@Override
 	public synchronized void echo(Node neighbour, Object data) {
@@ -77,7 +79,7 @@ public class Nodes extends NodeAbstract {
 		}
 		System.out.println("echo von " + neighbour + " an " + this);
 		countedEchos.incrementAndGet();
-		testFinish();
+		notifyAll();
 	}
 
 	@Override

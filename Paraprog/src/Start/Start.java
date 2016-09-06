@@ -13,7 +13,7 @@ import process.Nodes;
 public class Start {
 
 	public static void main(String[] args) {
-		int nodes = 10;
+		int nodes = 9;
 		loopTree(nodes);
 	}
 
