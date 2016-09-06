@@ -90,6 +90,7 @@ public class Nodes extends NodeAbstract {
 				node.hello(this);
 			}
 		}
+		System.out.println(this+": setupneighbours finished with "+ (neighbours!=null?neighbours.length:"0") +" neighbours");
 		startLatch.countDown();
 	}
 
