@@ -26,14 +26,15 @@ public class Nodes extends NodeAbstract {
 
 	@Override
 	public synchronized void wakeup(Node neighbour) {
-		System.out.println("wakeup von " + neighbour + " an " + this);
 		countedEchos.incrementAndGet();
-		if (wakeupNeighbour == null) {
+		System.out.println("wakeup von " + neighbour + " an " + this + ", anzahl Nachrichten: " + countedEchos.get()
+				+ "/" + neighbours.size());
+		if (wakeupNeighbour == null && !initiator) {
 			wakeupNeighbour = neighbour;
 			start();
-		} else {
-			notifyAll();
 		}
+		yield();
+		testFinish();		
 	}
 
 	@Override
@@ -42,24 +43,28 @@ public class Nodes extends NodeAbstract {
 
 	}
 
-	private synchronized void runHelper() {
+	private void runHelper() {
 		try {
 			startLatch.await();
 			for (Node node : neighbours) {
+				System.out.println(" ");
 				if (node != wakeupNeighbour) {
 					node.wakeup(this);
 				}
 			}
-			while (countedEchos.get() < neighbours.size()) {
-				wait();
-			}
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	private void testFinish(){
+		System.out.println(this + ": " + countedEchos.get() + "/" + neighbours.size());
+		if (countedEchos.get() >= neighbours.size()) {
 			if (initiator) {
 				System.out.println("Fertig: " + data);
 			} else {
-				wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null?"," + data:""));
+				wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""));
 			}
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
 		}
 	}
 
@@ -72,7 +77,7 @@ public class Nodes extends NodeAbstract {
 		}
 		System.out.println("echo von " + neighbour + " an " + this);
 		countedEchos.incrementAndGet();
-		notifyAll();
+		testFinish();
 	}
 
 	@Override
