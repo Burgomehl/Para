@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 import node.Node;
+import process.ElectionNode;
 import process.Nodes;
 
 public class Start {
@@ -41,8 +42,30 @@ public class Start {
 			case "fg":
 				fullGraph(nodes);
 				break;
+			case "election":
+				election(3);
+				break;
 			}
 		}
+	}
+	
+	private static void election(int nodesToCreate){
+		System.out.println("Anzahl der ElectionNode " + nodesToCreate);
+		if (nodesToCreate < 3) {
+			throw new IllegalArgumentException("There must be at least 3 ElectionNode for a loop");
+		}
+		CountDownLatch latch = new CountDownLatch(nodesToCreate+1);
+		ElectionNode init = new ElectionNode("Initiator", true, latch,0);
+
+		ElectionNode temp = init;
+		for (int i = 1; i < nodesToCreate; i++) {
+			ElectionNode newNode = new ElectionNode("Node" + i, false, latch,i);
+			temp.setupNeighbours(newNode);
+			temp = newNode;
+		}
+		ElectionNode newNode = new ElectionNode("Node" + (nodesToCreate+1), true, latch,nodesToCreate+1);
+		temp.setupNeighbours(newNode);
+		newNode.setupNeighbours(init);
 	}
 
 	private static void fullGraph(int nodesToCreate) {

@@ -7,9 +7,9 @@ import node.Node;
 import node.NodeAbstract;
 
 public class Nodes extends NodeAbstract {
-	private AtomicInteger countedEchos;
-	private Node wakeupNeighbour;
-	private Object data;
+	protected AtomicInteger countedEchos;
+	protected Node wakeupNeighbour;
+	protected Object data;
 
 	public Nodes(String name, boolean initiator, CountDownLatch startLatch) {
 		super(name, initiator, startLatch);
@@ -56,7 +56,7 @@ public class Nodes extends NodeAbstract {
 
 	}
 
-	private void runHelper() {
+	protected void runHelper() {
 		try {
 			startLatch.await();
 			for (Node node : neighbours) {
