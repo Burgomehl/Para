@@ -21,16 +21,31 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 			this.strength = strength;
 			countedEchos.set(0);
 			wakeupNeighbour = neighbour;
-			neustart = true;
+			setNeustart(true);
 		}
 		if (this.strength == strength) {
 			countedEchos.incrementAndGet();
 		}
-		System.out.println(this + " received wakeup from " + neighbour + " counter: " + countedEchos.get() + "|" + neighbours.size());
+		System.out.println(this + " received wakeup from " + neighbour + " counter: " + countedEchos.get() + "|"
+				+ neighbours.size() + " neustart: "+isNeustart());
 		if (!isAlive()) {
 			start();
 		}
 		notifyAll();
+	}
+
+	public synchronized boolean isNeustart() {
+		return neustart;
+	}
+	
+	public synchronized boolean changeNeustart(){
+		boolean temp = neustart;
+		neustart = !neustart;
+		return temp;
+	}
+
+	public synchronized void setNeustart(boolean neustart) {
+		this.neustart = neustart;
 	}
 
 	@Override
@@ -38,18 +53,21 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 		try {
 			startLatch.await();
 			do {
-				if (neustart) {
+				if (changeNeustart()) {
 					System.out.println(this + " start/restart");
 					for (Node node : neighbours) {
+						if(isNeustart()){
+							break;
+						}
 						System.out.println(" ");
 						if (node != wakeupNeighbour) {
 							((ElectionNode) node).wakeup(this, strength);
 						}
 					}
-					neustart = false;
 				}
 				synchronized (this) {
-					while (countedEchos.get() < neighbours.size()) {
+
+					while (countedEchos.get() < neighbours.size() && !isNeustart()) {
 						try {
 							wait();
 							System.out.println(this + ":" + countedEchos.get() + "/" + neighbours.size() + " Strength: "
@@ -59,7 +77,7 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 						}
 					}
 				}
-			} while (neustart);
+			} while (isNeustart());
 
 			if (initiator && wakeupNeighbour == null) {
 				System.out.println("Fertig: " + data);
@@ -85,6 +103,6 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 
 	@Override
 	public String toString() {
-		return super.toString() + "(" + strength +  ")";
+		return super.toString() + "(" + strength + ")";
 	}
 }
