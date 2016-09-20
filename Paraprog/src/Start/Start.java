@@ -63,7 +63,7 @@ public class Start {
 			temp.setupNeighbours(newNode);
 			temp = newNode;
 		}
-		ElectionNode newNode = new ElectionNode("Strong Initiator", true, latch,nodesToCreate+1);
+		ElectionNode newNode = new ElectionNode("StrongInitiator", true, latch,nodesToCreate+1);
 		temp.setupNeighbours(newNode);
 		newNode.setupNeighbours(init);
 	}
