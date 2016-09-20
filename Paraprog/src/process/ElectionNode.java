@@ -26,8 +26,7 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 		if (this.strength == strength) {
 			countedEchos.incrementAndGet();
 		}
-		System.out.println("wakeup von " + neighbour + " an " + this + ", anzahl Nachrichten: " + countedEchos.get()
-				+ "/" + neighbours.size() + " Strength: "+ this.strength);
+		System.out.println(this + " received wakeup from " + neighbour + " counter: " + countedEchos.get() + "|" + neighbours.size());
 		if (!isAlive()) {
 			start();
 		}
@@ -38,9 +37,9 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 	public void run() {
 		try {
 			startLatch.await();
-			while (countedEchos.get() < neighbours.size()) {
+			do {
 				if (neustart) {
-					System.out.println(this+" start/restart");
+					System.out.println(this + " start/restart");
 					for (Node node : neighbours) {
 						System.out.println(" ");
 						if (node != wakeupNeighbour) {
@@ -50,15 +49,17 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 					neustart = false;
 				}
 				synchronized (this) {
-					try {
-						wait();
-						System.out.println(this+":"+countedEchos.get()
-				+ "/" + neighbours.size() + " Strength: "+ this.strength);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+					while (countedEchos.get() < neighbours.size()) {
+						try {
+							wait();
+							System.out.println(this + ":" + countedEchos.get() + "/" + neighbours.size() + " Strength: "
+									+ this.strength);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 					}
 				}
-			}
+			} while (neustart);
 
 			if (initiator && wakeupNeighbour == null) {
 				System.out.println("Fertig: " + data);
@@ -82,4 +83,8 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 		startLatch.countDown();
 	}
 
+	@Override
+	public String toString() {
+		return super.toString() + "(" + strength +  ")";
+	}
 }
