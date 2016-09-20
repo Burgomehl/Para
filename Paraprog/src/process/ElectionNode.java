@@ -16,16 +16,6 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 	}
 
 	@Override
-	protected void runHelper() {
-		for (Node node : neighbours) {
-			System.out.println(" ");
-			if (node != wakeupNeighbour) {
-				((ElectionNode) node).wakeup(this, strength);
-			}
-		}
-	}
-
-	@Override
 	public synchronized void wakeup(Node neighbour, int strength) {
 		if (this.strength == null || this.strength < strength) {
 			this.strength = strength;
@@ -51,7 +41,12 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 			while (countedEchos.get() < neighbours.size()) {
 				if (neustart) {
 					System.out.println(this+" start/restart");
-					runHelper();
+					for (Node node : neighbours) {
+						System.out.println(" ");
+						if (node != wakeupNeighbour) {
+							((ElectionNode) node).wakeup(this, strength);
+						}
+					}
 					neustart = false;
 				}
 				synchronized (this) {

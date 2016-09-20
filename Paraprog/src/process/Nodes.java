@@ -38,9 +38,20 @@ public class Nodes extends NodeAbstract {
 
 	@Override
 	public void run() {
-		runHelper();
+		try {
+			startLatch.await();
+			for (Node node : neighbours) {
+				System.out.println(" ");
+				if (node != wakeupNeighbour) {
+					node.wakeup(this);
+				}
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
 		synchronized (this) {
-			while(countedEchos.get() < neighbours.size()){
+			while (countedEchos.get() < neighbours.size()) {
 				try {
 					wait();
 				} catch (InterruptedException e) {
@@ -54,20 +65,6 @@ public class Nodes extends NodeAbstract {
 			}
 		}
 
-	}
-
-	protected void runHelper() {
-		try {
-			startLatch.await();
-			for (Node node : neighbours) {
-				System.out.println(" ");
-				if (node != wakeupNeighbour) {
-					node.wakeup(this);
-				}
-			}
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		}
 	}
 
 	@Override
@@ -90,7 +87,8 @@ public class Nodes extends NodeAbstract {
 				node.hello(this);
 			}
 		}
-		System.out.println(this+": setupneighbours finished with "+ (neighbours!=null?neighbours.length:"0") +" neighbours");
+		System.out.println(this + ": setupneighbours finished with " + (neighbours != null ? neighbours.length : "0")
+				+ " neighbours");
 		startLatch.countDown();
 	}
 
