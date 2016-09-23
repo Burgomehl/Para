@@ -1,0 +1,60 @@
+const False = 0
+const True = 1
+range Bool = False..True
+const CountMax = 4
+
+AStart = ANode[0],
+ANode[x:0..2] = (when (x == 0) aSetupNeighbors -> aHelloB -> aHelloC -> ANode[x+1] |
+				 when (x == 1) aWakeupB -> aWakeupC -> ANode[x+1] | 
+				 when (x == 2) ende -> restart -> AStart).
+
+BStart = BNode[0],
+BNode[x:0..3] = (when (x == 0) bSetupNeighbors -> bHelloA -> bHelloD -> BNode[x+1] |
+				 when (x == 1) bWakeupD -> BNode[x+1] | 
+				 when (x == 2) bEchoA -> BNode[x+1] |
+				 when (x == 3) restart -> BStart).
+
+CStart = CNode[0],
+CNode[x:0..3] = (when (x == 0) cSetupNeighbors -> cHelloD -> cHelloA -> CNode[x+1] |
+				 when (x == 1) cWakeupD -> CNode[x+1] | 
+				 when (x == 2) cEchoA -> CNode[x+1] |
+				 when (x == 3) restart -> CStart).
+
+DStart = DNode[0],
+DNode[x:0..3] = (when (x == 0) dSetupNeighbors -> dHelloC -> dHelloB -> DNode[x+1] |
+				 when (x == 1) dWakeupC -> DNode[x+1] | 
+				 when (x == 2) dEchoB -> DNode[x+1] |
+				 when (x == 3) restart -> DStart).
+
+progress Restart = {restart}
+
+NodeLock = Locked[0][0][0][0][True][False][False][False][0],
+
+Locked[echosA:0..2][echosB:0..2][echosC:0..2][echosD:0..2][canA:Bool][canB:Bool][canC:Bool][canD:Bool][countLatch:0..CountMax] = 
+	( when (countLatch < CountMax)
+		aSetupNeighbors -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch+1] |
+		bSetupNeighbors -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch+1] |
+		cSetupNeighbors -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch+1] |
+		dSetupNeighbors -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch+1]
+		
+	| when (canA && countLatch == CountMax)
+		aWakeupB -> aWakeupC -> Locked[echosA][echosB+1][echosC+1][echosD][False][True][True][canD][countLatch]
+	| when (echosA == 2 && countLatch == CountMax)
+		ende -> restart -> NodeLock
+
+	| when (canB && countLatch == CountMax)
+		bWakeupD -> Locked[echosA][echosB][echosC][echosD+1][canA][False][canC][True][countLatch]
+	| when (echosB == 2 && countLatch == CountMax)
+		bEchoA -> Locked[echosA+1][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
+
+	| when (canC && countLatch == CountMax)
+		cWakeupD -> Locked[echosA][echosB][echosC][echosD+1][canA][canB][False][True][countLatch]
+	| when (echosC == 2 && countLatch == CountMax)
+		cEchoA -> Locked[echosA+1][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
+	
+	| when (canD && countLatch == CountMax)
+		dWakeupC -> Locked[echosA][echosB][echosC+1][echosD][canA][canB][True][False][countLatch]
+	| when (echosD == 2 && countLatch == CountMax)
+		dEchoB -> Locked[echosA][echosB+1][echosC][echosD][canA][canB][canC][canD][countLatch]).
+
+||Round = (a:AStart || a:BStart || a:CStart || a:DStart || {a}::NodeLock).
