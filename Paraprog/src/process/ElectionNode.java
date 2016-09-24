@@ -25,7 +25,9 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 			restart.set(true);
 		}
 		if (this.strength == strength) {
+			System.out.println(this + " will increment counter in wakeup from " + countedEchos.get());
 			countedEchos.incrementAndGet();
+			System.out.println(this + " has incremented counter in wakeup to " + countedEchos.get());
 		}
 		System.out.println(this + " received wakeup from " + neighbour + " counter: " + countedEchos.get() + "|"
 				+ neighbours.size() + " neustart: " + restart.get());
@@ -65,15 +67,25 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 							}
 						}
 					}
-				} while (restart.get());
+				} while (restart.get() && countedEchos.get() < neighbours.size());
 
+				
 				if (initiator && wakeupNeighbour == null) {
 					System.out.println("Fertig: " + data);
 					System.exit(0);
 				} else {
 					((ElectionNode)wakeupNeighbour).echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""), strength);
 				}
-				countedEchos.set(0);
+				
+				synchronized (this) {
+					if (countedEchos.get() >= neighbours.size()){
+						System.out.println(this + " reset counter (current value: " + countedEchos.get() + ")");
+						countedEchos.set(0);
+					} else {
+						System.out.println(this + " has a problem");
+					}
+				}
+				
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
@@ -92,7 +104,7 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 		startLatch.countDown();
 	}
 
-	public synchronized void echo(Node neighbour, Object data, Integer strength) {
+	public synchronized void echo(Node neighbour, Object data, int strength) {
 		if (this.strength == strength) {
 			if (this.data == null) {
 				this.data = data;
@@ -100,8 +112,12 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 				this.data = data + "," + this.data;
 			}
 			System.out.println("echo von " + neighbour + " an " + this);
+			System.out.println(this + " will increment counter in echo from " + countedEchos.get());
 			countedEchos.incrementAndGet();
+			System.out.println(this + " has incremented counter in echo to " + countedEchos.get());
 			notifyAll();
+		}else{
+			System.out.println(this + " echo ging daneben "+ this.strength+"/"+strength);
 		}
 	}
 

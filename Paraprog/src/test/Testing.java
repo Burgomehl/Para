@@ -7,8 +7,8 @@ import Start.Start;
 public class Testing {
 	static Random r = new Random();
 
-	public static void main(String[] args) {
-			Start.election(10);
+	public static void main(String[] args) throws InterruptedException {
+		Start.election(6000);
 	}
 
 }
