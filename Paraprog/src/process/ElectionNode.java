@@ -37,42 +37,46 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 
 	@Override
 	public void run() {
-		try {
-			startLatch.await();
-			do {
-				if (restart.getAndSet(false)) {
-					System.out.println(this + " start/restart");
-					for (Node node : neighbours) {
-						if (restart.get()) {
-							break;
-						}
-						System.out.println(" ");
-						if (node != wakeupNeighbour) {
-							((ElectionNode) node).wakeup(this, strength);
-						}
-					}
-				}
-				synchronized (this) {
-
-					while (countedEchos.get() < neighbours.size() && !restart.get()) {
-						try {
-							wait();
-							System.out.println(this + ":" + countedEchos.get() + "/" + neighbours.size() + " Strength: "
-									+ this.strength);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
+		while (true){
+			try {
+				startLatch.await();
+				do {
+					if (restart.getAndSet(false)) {
+						System.out.println(this + " start/restart");
+						for (Node node : neighbours) {
+							if (restart.get()) {
+								break;
+							}
+							System.out.println(" ");
+							if (node != wakeupNeighbour) {
+								((ElectionNode) node).wakeup(this, strength);
+							}
 						}
 					}
-				}
-			} while (restart.get());
+					synchronized (this) {
 
-			if (initiator && wakeupNeighbour == null) {
-				System.out.println("Fertig: " + data);
-			} else {
-				((ElectionNode)wakeupNeighbour).echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""), strength);
+						while (countedEchos.get() < neighbours.size() && !restart.get()) {
+							try {
+								wait();
+								System.out.println(this + ":" + countedEchos.get() + "/" + neighbours.size() + " Strength: "
+										+ this.strength);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+					}
+				} while (restart.get());
+
+				if (initiator && wakeupNeighbour == null) {
+					System.out.println("Fertig: " + data);
+					System.exit(0);
+				} else {
+					((ElectionNode)wakeupNeighbour).echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""), strength);
+				}
+				countedEchos.set(0);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
 			}
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
 		}
 	}
 
