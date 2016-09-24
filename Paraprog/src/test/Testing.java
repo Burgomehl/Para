@@ -8,7 +8,7 @@ public class Testing {
 	static Random r = new Random();
 
 	public static void main(String[] args) {
-			Start.election(30);
+			Start.election(10);
 	}
 
 }

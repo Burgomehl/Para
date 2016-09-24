@@ -1,12 +1,13 @@
 package process;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import node.Node;
 
 public class ElectionNode extends Nodes implements node.IElectionNode {
 	private Integer strength;
-	private boolean neustart = true;
+	private AtomicBoolean restart = new AtomicBoolean(true);
 
 	public ElectionNode(String name, boolean initiator, CountDownLatch startLatch, int strength) {
 		super(name, initiator, startLatch);
@@ -21,31 +22,17 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 			this.strength = strength;
 			countedEchos.set(0);
 			wakeupNeighbour = neighbour;
-			setNeustart(true);
+			restart.set(true);
 		}
 		if (this.strength == strength) {
 			countedEchos.incrementAndGet();
 		}
 		System.out.println(this + " received wakeup from " + neighbour + " counter: " + countedEchos.get() + "|"
-				+ neighbours.size() + " neustart: "+isNeustart());
+				+ neighbours.size() + " neustart: "+ restart.get());
 		if (State.NEW == this.getState()) {
 			start();
 		}
 		notifyAll();
-	}
-
-	public synchronized boolean isNeustart() {
-		return neustart;
-	}
-	
-	public synchronized boolean changeNeustart(){
-		boolean temp = neustart;
-		neustart = !neustart;
-		return temp;
-	}
-
-	public synchronized void setNeustart(boolean neustart) {
-		this.neustart = neustart;
 	}
 
 	@Override
@@ -53,10 +40,10 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 		try {
 			startLatch.await();
 			do {
-				if (changeNeustart()) {
+				if (restart.getAndSet(false)) {
 					System.out.println(this + " start/restart");
 					for (Node node : neighbours) {
-						if(isNeustart()){
+						if(restart.get()){
 							break;
 						}
 						System.out.println(" ");
@@ -67,7 +54,7 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 				}
 				synchronized (this) {
 
-					while (countedEchos.get() < neighbours.size() && !isNeustart()) {
+					while (countedEchos.get() < neighbours.size() && !restart.get()) {
 						try {
 							wait();
 							System.out.println(this + ":" + countedEchos.get() + "/" + neighbours.size() + " Strength: "
@@ -77,7 +64,7 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 						}
 					}
 				}
-			} while (isNeustart());
+			} while (restart.get());
 
 			if (initiator && wakeupNeighbour == null) {
 				System.out.println("Fertig: " + data);
