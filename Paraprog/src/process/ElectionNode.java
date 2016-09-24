@@ -28,7 +28,7 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 		}
 		System.out.println(this + " received wakeup from " + neighbour + " counter: " + countedEchos.get() + "|"
 				+ neighbours.size() + " neustart: "+isNeustart());
-		if (!isAlive()) {
+		if (State.NEW == this.getState()) {
 			start();
 		}
 		notifyAll();

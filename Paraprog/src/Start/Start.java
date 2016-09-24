@@ -12,6 +12,7 @@ import process.ElectionNode;
 import process.Nodes;
 
 public class Start {
+	private static Random r = new Random();
 
 	public static void main(String[] args) {
 		if (args.length < 1) {
@@ -49,7 +50,7 @@ public class Start {
 		}
 	}
 	
-	private static void election(int nodesToCreate){
+	public static void election(int nodesToCreate){
 		System.out.println("Anzahl der ElectionNode " + nodesToCreate);
 		if (nodesToCreate < 3) {
 			throw new IllegalArgumentException("There must be at least 3 ElectionNode for a loop");
@@ -59,7 +60,7 @@ public class Start {
 
 		ElectionNode temp = init;
 		for (int i = 1; i < nodesToCreate; i++) {
-			ElectionNode newNode = new ElectionNode("Node" + i, false, latch,i);
+			ElectionNode newNode = new ElectionNode("Node" + i, r.nextBoolean(), latch,i);
 			temp.setupNeighbours(newNode);
 			temp = newNode;
 		}
@@ -68,7 +69,7 @@ public class Start {
 		newNode.setupNeighbours(init);
 	}
 
-	private static void fullGraph(int nodesToCreate) {
+	public static void fullGraph(int nodesToCreate) {
 		System.out.println("Anzahl der Nodes " + nodesToCreate);
 		if (nodesToCreate < 1) {
 			throw new IllegalArgumentException("There must be at least 1 Node for a loop");
@@ -87,7 +88,7 @@ public class Start {
 		}
 	}
 
-	private static void tree(int nodesToCreate) {
+	public static void tree(int nodesToCreate) {
 		System.out.println("Anzahl der Nodes " + nodesToCreate);
 		if (nodesToCreate < 1) {
 			throw new IllegalArgumentException("There must be at least 1 Node for a loop");
@@ -109,7 +110,7 @@ public class Start {
 		System.out.println("init fertig");
 	}
 
-	private static void ellipse(int nodesToCreate) {
+	public static void ellipse(int nodesToCreate) {
 		System.out.println("Anzahl der Nodes " + nodesToCreate);
 		if (nodesToCreate < 3) {
 			throw new IllegalArgumentException("There must be at least 3 Nodes for a loop");
@@ -126,7 +127,7 @@ public class Start {
 		temp.setupNeighbours(init);
 	}
 
-	private static void nodeLoop() {
+	public static void nodeLoop() {
 		System.out.println("Anzahl der Nodes " + 1);
 		CountDownLatch latch = new CountDownLatch(1);
 		Nodes init = new Nodes("Initiator", true, latch);
@@ -137,7 +138,7 @@ public class Start {
 		init.setupNeighbours(init);
 	}
 
-	private static void loopTree(int nodesToCreate) throws IllegalArgumentException {
+	public static void loopTree(int nodesToCreate) throws IllegalArgumentException {
 		System.out.println("Anzahl der Nodes " + nodesToCreate);
 		if (nodesToCreate < 3) {
 			throw new IllegalArgumentException("There must be at least 3 Nodes for a loop");
