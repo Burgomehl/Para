@@ -28,7 +28,7 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 			countedEchos.incrementAndGet();
 		}
 		System.out.println(this + " received wakeup from " + neighbour + " counter: " + countedEchos.get() + "|"
-				+ neighbours.size() + " neustart: "+ restart.get());
+				+ neighbours.size() + " neustart: " + restart.get());
 		if (State.NEW == this.getState()) {
 			start();
 		}
@@ -43,7 +43,7 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 				if (restart.getAndSet(false)) {
 					System.out.println(this + " start/restart");
 					for (Node node : neighbours) {
-						if(restart.get()){
+						if (restart.get()) {
 							break;
 						}
 						System.out.println(" ");
@@ -69,7 +69,7 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 			if (initiator && wakeupNeighbour == null) {
 				System.out.println("Fertig: " + data);
 			} else {
-				wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""));
+				((ElectionNode)wakeupNeighbour).echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""), strength);
 			}
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
@@ -86,6 +86,19 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 		System.out.println(this + ": setupneighbours finished with " + (neighbours != null ? neighbours.length : "0")
 				+ " neighbours");
 		startLatch.countDown();
+	}
+
+	public synchronized void echo(Node neighbour, Object data, Integer strength) {
+		if (this.strength == strength) {
+			if (this.data == null) {
+				this.data = data;
+			} else {
+				this.data = data + "," + this.data;
+			}
+			System.out.println("echo von " + neighbour + " an " + this);
+			countedEchos.incrementAndGet();
+			notifyAll();
+		}
 	}
 
 	@Override
