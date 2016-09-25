@@ -2,10 +2,17 @@ package process;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import node.Node;
+import node.NodeAbstract;
 
-public class ElectionNode extends Nodes implements node.IElectionNode {
+public class ElectionNode extends NodeAbstract {
+
+	protected AtomicInteger countedEchos;
+	protected Node wakeupNeighbour;
+	protected Object data;
+
 	private Integer strength;
 	private AtomicBoolean restart = new AtomicBoolean(true);
 
@@ -39,7 +46,7 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 
 	@Override
 	public void run() {
-		while (true){
+		while (true) {
 			try {
 				startLatch.await();
 				do {
@@ -51,7 +58,7 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 							}
 							System.out.println(" ");
 							if (node != wakeupNeighbour) {
-								((ElectionNode) node).wakeup(this, strength);
+								node.wakeup(this, strength);
 							}
 						}
 					}
@@ -60,8 +67,8 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 						while (countedEchos.get() < neighbours.size() && !restart.get()) {
 							try {
 								wait();
-								System.out.println(this + ":" + countedEchos.get() + "/" + neighbours.size() + " Strength: "
-										+ this.strength);
+								System.out.println(this + ":" + countedEchos.get() + "/" + neighbours.size()
+										+ " Strength: " + this.strength);
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
@@ -69,23 +76,23 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 					}
 				} while (restart.get() && countedEchos.get() < neighbours.size());
 
-				
 				if (initiator && wakeupNeighbour == null) {
 					System.out.println("Fertig: " + data);
 					System.exit(0);
 				} else {
-					((ElectionNode)wakeupNeighbour).echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""), strength);
+					wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""),
+							strength);
 				}
-				
+
 				synchronized (this) {
-					if (countedEchos.get() >= neighbours.size()){
+					if (countedEchos.get() >= neighbours.size()) {
 						System.out.println(this + " reset counter (current value: " + countedEchos.get() + ")");
 						countedEchos.set(0);
 					} else {
 						System.out.println(this + " has a problem");
 					}
 				}
-				
+
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
@@ -116,8 +123,8 @@ public class ElectionNode extends Nodes implements node.IElectionNode {
 			countedEchos.incrementAndGet();
 			System.out.println(this + " has incremented counter in echo to " + countedEchos.get());
 			notifyAll();
-		}else{
-			System.out.println(this + " echo ging daneben "+ this.strength+"/"+strength);
+		} else {
+			System.out.println(this + " echo ging daneben " + this.strength + "/" + strength);
 		}
 	}
 

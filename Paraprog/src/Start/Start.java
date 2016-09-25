@@ -9,8 +9,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.IntStream;
 
 import node.Node;
+import node.NodeAbstract;
 import process.ElectionNode;
-import process.Nodes;
+import process.EchoNode;
 
 public class Start {
 	private static Random r = new Random();
@@ -76,9 +77,9 @@ public class Start {
 			throw new IllegalArgumentException("There must be at least 1 Node for a loop");
 		}
 		CountDownLatch latch = new CountDownLatch(nodesToCreate);
-		Set<Nodes> nodes = new HashSet<>();
-		IntStream.range(0, nodesToCreate).forEach( i -> nodes.add(new Nodes(i==0?"Initiator":"Node" + i, i==0?true:false, latch)));
-		nodes.forEach(node -> node.setupNeighbours(nodes.toArray(new Nodes[nodes.size()])));
+		Set<NodeAbstract> nodes = new HashSet<>();
+		IntStream.range(0, nodesToCreate).forEach( i -> nodes.add(new EchoNode(i==0?"Initiator":"Node" + i, i==0?true:false, latch)));
+		nodes.forEach(node -> node.setupNeighbours(nodes.toArray(new EchoNode[nodes.size()])));
 	}
 	
 	public static void fullGraphElection(int nodesToCreate) {
@@ -87,16 +88,16 @@ public class Start {
 			throw new IllegalArgumentException("There must be at least 1 Node for a loop");
 		}
 		CountDownLatch latch = new CountDownLatch(nodesToCreate);
-		Nodes init = new ElectionNode("Initiator", true, latch , 0);
+		NodeAbstract init = new ElectionNode("Initiator", true, latch , 0);
 
-		Set<Nodes> nodes = new HashSet<>();
+		Set<NodeAbstract> nodes = new HashSet<>();
 		nodes.add(init);
 
 		for (int i = 1; i < nodesToCreate; i++) {
 			nodes.add(new ElectionNode("Node" + i, r.nextBoolean(), latch, i));
 		}
-		for (Nodes node : nodes) {
-			((ElectionNode)node).setupNeighbours(nodes.toArray(new Nodes[nodes.size()]));
+		for (NodeAbstract node : nodes) {
+			node.setupNeighbours(nodes.toArray(new EchoNode[nodes.size()]));
 		}
 	}
 
@@ -106,15 +107,15 @@ public class Start {
 			throw new IllegalArgumentException("There must be at least 1 Node for a loop");
 		}
 		CountDownLatch latch = new CountDownLatch(nodesToCreate);
-		Nodes init = new Nodes("Initiator", true, latch);
+		EchoNode init = new EchoNode("Initiator", true, latch);
 
-		Set<Nodes> nodes = new HashSet<>();
+		Set<EchoNode> nodes = new HashSet<>();
 		nodes.add(init);
 
 		Random r = new Random();
 		for (int i = 1; i < nodesToCreate; i++) {
-			Nodes newNode = new Nodes("Node" + i, false, latch);
-			List<Nodes> possibleNeighbours = new ArrayList<>(nodes);
+			EchoNode newNode = new EchoNode("Node" + i, false, latch);
+			List<EchoNode> possibleNeighbours = new ArrayList<>(nodes);
 			newNode.setupNeighbours(possibleNeighbours.get(r.nextInt(possibleNeighbours.size())));
 			nodes.add(newNode);
 		}
@@ -128,11 +129,11 @@ public class Start {
 			throw new IllegalArgumentException("There must be at least 3 Nodes for a loop");
 		}
 		CountDownLatch latch = new CountDownLatch(nodesToCreate);
-		Nodes init = new Nodes("Initiator", true, latch);
+		EchoNode init = new EchoNode("Initiator", true, latch);
 
-		Nodes temp = init;
+		EchoNode temp = init;
 		for (int i = 1; i < nodesToCreate; i++) {
-			Nodes newNode = new Nodes("Node" + i, false, latch);
+			EchoNode newNode = new EchoNode("Node" + i, false, latch);
 			temp.setupNeighbours(newNode);
 			temp = newNode;
 		}
@@ -142,9 +143,9 @@ public class Start {
 	public static void nodeLoop() {
 		System.out.println("Anzahl der Nodes " + 1);
 		CountDownLatch latch = new CountDownLatch(1);
-		Nodes init = new Nodes("Initiator", true, latch);
+		EchoNode init = new EchoNode("Initiator", true, latch);
 
-		Set<Nodes> nodes = new HashSet<>();
+		Set<EchoNode> nodes = new HashSet<>();
 		nodes.add(init);
 
 		init.setupNeighbours(init);
@@ -156,29 +157,29 @@ public class Start {
 			throw new IllegalArgumentException("There must be at least 3 Nodes for a loop");
 		}
 		CountDownLatch latch = new CountDownLatch(nodesToCreate);
-		Nodes init = new Nodes("Initiator", true, latch);
-		Nodes node1 = new Nodes("Node1", false, latch);
-		Nodes node2 = new Nodes("Node2", false, latch);
+		EchoNode init = new EchoNode("Initiator", true, latch);
+		EchoNode node1 = new EchoNode("Node1", false, latch);
+		EchoNode node2 = new EchoNode("Node2", false, latch);
 
-		Set<Nodes> nodes = new HashSet<>();
+		Set<EchoNode> nodes = new HashSet<>();
 		nodes.add(init);
 		nodes.add(node1);
 		nodes.add(node2);
 
 		Random r = new Random();
 		for (int i = 3; i < nodesToCreate; i++) {
-			Nodes newNode = new Nodes("Node" + i, false, latch);
+			EchoNode newNode = new EchoNode("Node" + i, false, latch);
 			int neighboursCount = r.nextInt(nodes.size()) + 1;
-			List<Nodes> possibleNeighbours = new ArrayList<>(nodes);
-			Set<Nodes> neighbours = new HashSet<>();
+			List<EchoNode> possibleNeighbours = new ArrayList<>(nodes);
+			Set<EchoNode> neighbours = new HashSet<>();
 			for (int j = 0; j < neighboursCount; j++) {
-				Nodes newNeighbour = possibleNeighbours.get(r.nextInt(possibleNeighbours.size()));
+				EchoNode newNeighbour = possibleNeighbours.get(r.nextInt(possibleNeighbours.size()));
 				possibleNeighbours.remove(newNeighbour);
 				neighbours.add(newNeighbour);
 			}
 			nodes.add(newNode);
 			newNode.setupNeighbours(neighbours.toArray(new Node[neighbours.size()]));
-			for (Nodes nodes2 : neighbours) {
+			for (EchoNode nodes2 : neighbours) {
 				System.out.println(nodes2);
 			}
 		}

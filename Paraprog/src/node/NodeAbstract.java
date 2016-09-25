@@ -42,12 +42,26 @@ public abstract class NodeAbstract extends Thread implements Node {
 	 * node "b" as its neighbour, also node "b" must have node "a" as its
 	 * neighbour)!
 	 */
-	public abstract void setupNeighbours(Node... neighbours);
+	public void setupNeighbours(Node... neighbours) {
+		if (neighbours != null) {
+			for (Node node : neighbours) {
+				this.neighbours.add(node);
+				node.hello(this);
+			}
+		}
+		System.out.println(this + ": setupneighbours finished with " + (neighbours != null ? neighbours.length : "0")
+				+ " neighbours");
+		startLatch.countDown();
+	}
 
 	/** Utility method to print this node in a readable way */
 	@Override
 	public String toString() {
 		return name;
 	}
-
+	
+	@Override
+	public void hello(Node neighbour) {
+		neighbours.add(neighbour);
+	}
 }
