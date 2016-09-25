@@ -15,6 +15,7 @@ public class ElectionNode extends NodeAbstract {
 
 	private Integer strength;
 	private AtomicBoolean restart = new AtomicBoolean(true);
+	private boolean echo = false;
 
 	public ElectionNode(String name, boolean initiator, CountDownLatch startLatch, int strength) {
 		super(name, initiator, startLatch);
@@ -81,8 +82,15 @@ public class ElectionNode extends NodeAbstract {
 
 				synchronized (this) {
 					if (initiator && wakeupNeighbour == null) {
-						System.out.println("Fertig: " + this + " wurde gewählt");
-						System.exit(0);
+						if (!echo){
+							System.out.println("Fertig: " + this + " wurde gewählt");
+							restart.set(echo = true);
+							strength += 1;
+							this.data = null;
+						} else {
+							System.out.println("Fertig: " + data);
+							System.exit(0);
+						}						
 					} else {
 						wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""),
 								strength);
