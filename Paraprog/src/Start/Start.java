@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.IntStream;
 
 import node.Node;
 import process.ElectionNode;
@@ -75,16 +76,27 @@ public class Start {
 			throw new IllegalArgumentException("There must be at least 1 Node for a loop");
 		}
 		CountDownLatch latch = new CountDownLatch(nodesToCreate);
-		Nodes init = new Nodes("Initiator", true, latch);
+		Set<Nodes> nodes = new HashSet<>();
+		IntStream.range(0, nodesToCreate).forEach( i -> nodes.add(new Nodes(i==0?"Initiator":"Node" + i, i==0?true:false, latch)));
+		nodes.forEach(node -> node.setupNeighbours(nodes.toArray(new Nodes[nodes.size()])));
+	}
+	
+	public static void fullGraphElection(int nodesToCreate) {
+		System.out.println("Anzahl der Nodes " + nodesToCreate);
+		if (nodesToCreate < 1) {
+			throw new IllegalArgumentException("There must be at least 1 Node for a loop");
+		}
+		CountDownLatch latch = new CountDownLatch(nodesToCreate);
+		Nodes init = new ElectionNode("Initiator", true, latch , 0);
 
 		Set<Nodes> nodes = new HashSet<>();
 		nodes.add(init);
 
 		for (int i = 1; i < nodesToCreate; i++) {
-			nodes.add(new Nodes("Node" + i, false, latch));
+			nodes.add(new ElectionNode("Node" + i, r.nextBoolean(), latch, i));
 		}
 		for (Nodes node : nodes) {
-			node.setupNeighbours(nodes.toArray(new Nodes[nodes.size()]));
+			((ElectionNode)node).setupNeighbours(nodes.toArray(new Nodes[nodes.size()]));
 		}
 	}
 
