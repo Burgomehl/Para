@@ -49,8 +49,8 @@ public abstract class NodeAbstract extends Thread implements Node {
 				node.hello(this);
 			}
 		}
-		System.out.println(this + ": setupneighbours finished with " + (neighbours != null ? neighbours.length : "0")
-				+ " neighbours");
+//		System.out.println(this + ": setupneighbours finished with " + (neighbours != null ? neighbours.length : "0")
+//				+ " neighbours");
 		startLatch.countDown();
 	}
 
@@ -62,7 +62,7 @@ public abstract class NodeAbstract extends Thread implements Node {
 	
 	@Override
 	public void hello(Node neighbour) {
-		System.out.println(neighbour+" sayed hello to "+this);
+//		System.out.println(neighbour+" sayed hello to "+this);
 		neighbours.add(neighbour);
 	}
 }
