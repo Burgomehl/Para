@@ -62,6 +62,7 @@ public abstract class NodeAbstract extends Thread implements Node {
 	
 	@Override
 	public void hello(Node neighbour) {
+		System.out.println(neighbour+" sayed hello to "+this);
 		neighbours.add(neighbour);
 	}
 }

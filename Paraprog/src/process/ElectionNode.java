@@ -28,12 +28,21 @@ public class ElectionNode extends NodeAbstract {
 
 	@Override
 	public synchronized void wakeup(Node neighbour, int strength) {
-		if (this.strength == null || this.strength < strength) {
+		if (this.strength == null) {
 			this.strength = strength;
 			this.data = null;
 			countedEchos.set(0);
 			wakeupNeighbour = neighbour;
 			restart.set(true);
+		}
+		synchronized (this.strength) {
+			if (this.strength < strength) {
+				this.strength = strength;
+				this.data = null;
+				countedEchos.set(0);
+				wakeupNeighbour = neighbour;
+				restart.set(true);
+			}
 		}
 		if (this.strength == strength) {
 			System.out.println(this + " will increment counter in wakeup from " + countedEchos.get());
@@ -57,12 +66,16 @@ public class ElectionNode extends NodeAbstract {
 					if (restart.getAndSet(false)) {
 						System.out.println(this + " start/restart");
 						for (Node node : neighbours) {
-							if (restart.get()) {
-								break;
+							int tempStrength;
+							synchronized (this.strength) {
+								if (restart.get()) {
+									break;
+								}
+								System.out.println(" ");
+								tempStrength = this.strength;
 							}
-							System.out.println(" ");
 							if (node != wakeupNeighbour) {
-								node.wakeup(this, strength);
+								node.wakeup(this, tempStrength);
 							}
 						}
 					}
@@ -82,21 +95,21 @@ public class ElectionNode extends NodeAbstract {
 
 				synchronized (this) {
 					if (initiator && wakeupNeighbour == null) {
-						if (!echo){
+						if (!echo) {
 							System.out.println("Fertig: " + this + " wurde gewählt");
 							restart.set(echo = true);
 							strength += 1;
 							this.data = null;
 						} else {
 							System.out.println("Fertig: " + data);
+							System.out.println("Ausgabenmenge: "+(((String)(data)).split(",").length + 1) );
 							System.exit(0);
-						}						
+						}
 					} else {
 						wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""),
 								strength);
 					}
 
-				
 					if (countedEchos.get() >= neighbours.size()) {
 						System.out.println(this + " reset counter (current value: " + countedEchos.get() + ")");
 						countedEchos.set(0);
