@@ -81,7 +81,7 @@ public class ElectionNode extends NodeAbstract {
 
 				synchronized (this) {
 					if (initiator && wakeupNeighbour == null) {
-						System.out.println("Fertig: " + data);
+						System.out.println("Fertig: " + this + " wurde gewählt");
 						System.exit(0);
 					} else {
 						wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""),

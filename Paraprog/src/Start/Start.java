@@ -1,19 +1,17 @@
 package Start;
 
 import java.util.ArrayList;
-import java.util.Formatter.BigDecimalLayoutForm;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.BiFunction;
-import java.util.stream.IntStream;
 
 import node.Node;
 import node.NodeAbstract;
-import process.ElectionNode;
 import process.EchoNode;
+import process.ElectionNode;
 
 public class Start {
 	private static Random r = new Random();
