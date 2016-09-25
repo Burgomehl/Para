@@ -78,15 +78,16 @@ public class ElectionNode extends NodeAbstract {
 					}
 				} while (restart.get() && countedEchos.get() < neighbours.size());
 
-				if (initiator && wakeupNeighbour == null) {
-					System.out.println("Fertig: " + data);
-					System.exit(0);
-				} else {
-					wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""),
-							strength);
-				}
-
 				synchronized (this) {
+					if (initiator && wakeupNeighbour == null) {
+						System.out.println("Fertig: " + data);
+						System.exit(0);
+					} else {
+						wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""),
+								strength);
+					}
+
+				
 					if (countedEchos.get() >= neighbours.size()) {
 						System.out.println(this + " reset counter (current value: " + countedEchos.get() + ")");
 						countedEchos.set(0);
