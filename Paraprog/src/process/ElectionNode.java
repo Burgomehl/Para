@@ -29,6 +29,7 @@ public class ElectionNode extends NodeAbstract {
 	public synchronized void wakeup(Node neighbour, int strength) {
 		if (this.strength == null || this.strength < strength) {
 			this.strength = strength;
+			this.data = null;
 			countedEchos.set(0);
 			wakeupNeighbour = neighbour;
 			restart.set(true);
