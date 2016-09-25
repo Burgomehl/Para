@@ -36,12 +36,15 @@ public class ElectionNode extends NodeAbstract {
 			restart.set(true);
 		}
 		if (this.strength.get() == strength) {
-//			System.out.println(this + " will increment counter in wakeup from " + countedEchos.get());
+			// System.out.println(this + " will increment counter in wakeup from
+			// " + countedEchos.get());
 			countedEchos.incrementAndGet();
-//			System.out.println(this + " has incremented counter in wakeup to " + countedEchos.get());
+			// System.out.println(this + " has incremented counter in wakeup to
+			// " + countedEchos.get());
 		}
-//		System.out.println(this + " received wakeup from " + neighbour + " counter: " + countedEchos.get() + "|"
-//				+ neighbours.size() + " neustart: " + restart.get());
+		// System.out.println(this + " received wakeup from " + neighbour + "
+		// counter: " + countedEchos.get() + "|"
+		// + neighbours.size() + " neustart: " + restart.get());
 		if (State.NEW == this.getState()) {
 			start();
 		}
@@ -55,7 +58,7 @@ public class ElectionNode extends NodeAbstract {
 				startLatch.await();
 				do {
 					if (restart.getAndSet(false)) {
-//						System.out.println(this + " start/restart");
+						// System.out.println(this + " start/restart");
 						for (Node node : neighbours) {
 							int tempStrength = this.strength.get();
 							if (restart.get()) {
@@ -71,8 +74,9 @@ public class ElectionNode extends NodeAbstract {
 						while (countedEchos.get() < neighbours.size() && !restart.get()) {
 							try {
 								wait();
-//								System.out.println(this + ":" + countedEchos.get() + "/" + neighbours.size()
-//										+ " Strength: " + this.strength);
+								// System.out.println(this + ":" +
+								// countedEchos.get() + "/" + neighbours.size()
+								// + " Strength: " + this.strength);
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
@@ -89,7 +93,9 @@ public class ElectionNode extends NodeAbstract {
 							this.data = null;
 						} else {
 							System.out.println("Fertig: " + data);
-							System.out.println("Ausgabenmenge: "+(((String)(data)).split(",").length + 1) );
+							if (data != null) {
+								System.out.println("Ausgabenmenge: " + (((String) (data)).split(",").length + 1));
+							}
 							System.exit(0);
 						}
 					} else {
@@ -98,7 +104,8 @@ public class ElectionNode extends NodeAbstract {
 					}
 
 					if (countedEchos.get() >= neighbours.size()) {
-//						System.out.println(this + " reset counter (current value: " + countedEchos.get() + ")");
+						// System.out.println(this + " reset counter (current
+						// value: " + countedEchos.get() + ")");
 						countedEchos.set(0);
 					} else {
 						System.out.println(this + " has a problem");
@@ -118,8 +125,9 @@ public class ElectionNode extends NodeAbstract {
 				node.hello(this);
 			}
 		}
-//		System.out.println(this + ": setupneighbours finished with " + (neighbours != null ? neighbours.length : "0")
-//				+ " neighbours");
+		// System.out.println(this + ": setupneighbours finished with " +
+		// (neighbours != null ? neighbours.length : "0")
+		// + " neighbours");
 		startLatch.countDown();
 	}
 
@@ -130,10 +138,12 @@ public class ElectionNode extends NodeAbstract {
 			} else {
 				this.data = data + "," + this.data;
 			}
-//			System.out.println("echo von " + neighbour + " an " + this);
-//			System.out.println(this + " will increment counter in echo from " + countedEchos.get());
+			// System.out.println("echo von " + neighbour + " an " + this);
+			// System.out.println(this + " will increment counter in echo from "
+			// + countedEchos.get());
 			countedEchos.incrementAndGet();
-//			System.out.println(this + " has incremented counter in echo to " + countedEchos.get());
+			// System.out.println(this + " has incremented counter in echo to "
+			// + countedEchos.get());
 			notifyAll();
 		} else {
 			System.out.println(this + " echo ging daneben " + this.strength + "/" + strength);
