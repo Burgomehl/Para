@@ -54,6 +54,9 @@ public class Start {
 				case "fg":
 					fullGraph(nodes, function);
 					break;
+				case "fgwl":
+					fullGraphWithLoops(nodes, function);
+					break;
 				default:
 					System.out.println("Missing Parameters for further information start application without params");
 					break;
@@ -63,6 +66,27 @@ public class Start {
 	}
 
 	public static void fullGraph(int nodesToCreate, BiFunction<CountDownLatch, Integer, NodeAbstract> function) {
+		System.out.println("Anzahl der Nodes " + nodesToCreate);
+		if (nodesToCreate < 1) {
+			throw new IllegalArgumentException("There must be at least 1 Node for a loop");
+		}
+		CountDownLatch latch = new CountDownLatch(nodesToCreate);
+		NodeAbstract init = function.apply(latch, 0);
+
+		Set<NodeAbstract> nodes = new HashSet<>();
+		nodes.add(init);
+
+		for (int i = 1; i < nodesToCreate; i++) {
+			nodes.add(function.apply(latch, i));
+		}
+		for (NodeAbstract node : nodes) {
+			Set<NodeAbstract> copyNode = new HashSet<>(nodes);
+			copyNode.remove(node);
+			node.setupNeighbours(copyNode.toArray(new NodeAbstract[copyNode.size()]));
+		}
+	}
+	
+	public static void fullGraphWithLoops(int nodesToCreate, BiFunction<CountDownLatch, Integer, NodeAbstract> function) {
 		System.out.println("Anzahl der Nodes " + nodesToCreate);
 		if (nodesToCreate < 1) {
 			throw new IllegalArgumentException("There must be at least 1 Node for a loop");
