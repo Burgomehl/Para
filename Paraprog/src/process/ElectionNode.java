@@ -20,7 +20,9 @@ public class ElectionNode extends NodeAbstract {
 		super(name, initiator, startLatch);
 		if (initiator) {
 			this.strength = strength;
+			start();
 		}
+		countedEchos = new AtomicInteger(0);
 	}
 
 	@Override

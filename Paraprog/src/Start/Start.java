@@ -97,7 +97,7 @@ public class Start {
 			nodes.add(new ElectionNode("Node" + i, r.nextBoolean(), latch, i));
 		}
 		for (NodeAbstract node : nodes) {
-			node.setupNeighbours(nodes.toArray(new EchoNode[nodes.size()]));
+			node.setupNeighbours(nodes.toArray(new ElectionNode[nodes.size()]));
 		}
 	}
 
