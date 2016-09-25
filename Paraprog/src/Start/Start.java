@@ -1,11 +1,13 @@
 package Start;
 
 import java.util.ArrayList;
+import java.util.Formatter.BigDecimalLayoutForm;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 
 import node.Node;
@@ -19,103 +21,83 @@ public class Start {
 	public static void main(String[] args) {
 		if (args.length < 1) {
 			System.out.println("You have to set some Parameters");
+			System.out.println("first off all you have to decide between 'echo' or 'election' at the first paramter");
 			System.out.println("ellipse 2 paramters: e and a number with min 3");
 			System.out.println("nodeLoop 1 parameter: nL");
 			System.out.println("tree 2 parameters: t and a numer with min 1");
 			System.out.println("graph with a loop 2 parameters: lt and a number with min 3");
 			System.out.println("full graph with two paramters: fg and a number with min 1");
 		} else {
-			int nodes = 1;
-			if(args.length==2){
-				nodes = Integer.parseInt(args[1]);
-			}
-			switch (args[0]) {
-			case "e":
-				 ellipse(nodes);
-				break;
-			case "nl":
-				 nodeLoop();
-				break;
-			case "t":
-				 tree(nodes);
-				break;
-			case "lt":
-				loopTree(nodes);
-				break;
-			case "fg":
-				fullGraph(nodes);
-				break;
-			case "election":
-				election(3);
-				break;
+			if (!args[0].equals("echo") && !args[0].equals("election")) {
+				System.out.println("You have to decide between 'echo' and 'elction' as first paramter ");
+			} else {
+				int nodes = 1;
+				BiFunction<CountDownLatch, Integer, NodeAbstract> function = (latch,
+						i) -> new EchoNode((i == 0 ? "Initiator" : "Node") + i, (i == 0 ? true : false), latch);
+				if (args[0].equals("election")) {
+					function = (latch, i) -> new ElectionNode("Node" + i, r.nextBoolean(), latch, i);
+				}
+				if (args.length == 3) {
+					nodes = Integer.parseInt(args[2]);
+				}
+				switch (args[1]) {
+				case "e":
+					ellipse(nodes, function);
+					break;
+				case "nl":
+					nodeLoop(function);
+					break;
+				case "t":
+					tree(nodes, function);
+					break;
+				case "lt":
+					loopTree(nodes, function);
+					break;
+				case "fg":
+					fullGraph(nodes, function);
+					break;
+				default:
+					System.out.println("Missing Parameters for further information start application without params");
+					break;
+				}
 			}
 		}
 	}
-	
-	public static void election(int nodesToCreate){
-		System.out.println("Anzahl der ElectionNode " + nodesToCreate);
-		if (nodesToCreate < 3) {
-			throw new IllegalArgumentException("There must be at least 3 ElectionNode for a loop");
-		}
-		CountDownLatch latch = new CountDownLatch(nodesToCreate+1);
-		ElectionNode init = new ElectionNode("Initiator", true, latch,0);
 
-		ElectionNode temp = init;
-		for (int i = 1; i < nodesToCreate; i++) {
-			ElectionNode newNode = new ElectionNode("Node" + i, r.nextBoolean(), latch,i);
-			temp.setupNeighbours(newNode);
-			temp = newNode;
-		}
-		ElectionNode newNode = new ElectionNode("StrongInitiator", true, latch,nodesToCreate+1);
-		temp.setupNeighbours(newNode);
-		newNode.setupNeighbours(init);
-	}
-
-	public static void fullGraph(int nodesToCreate) {
+	public static void fullGraph(int nodesToCreate, BiFunction<CountDownLatch, Integer, NodeAbstract> function) {
 		System.out.println("Anzahl der Nodes " + nodesToCreate);
 		if (nodesToCreate < 1) {
 			throw new IllegalArgumentException("There must be at least 1 Node for a loop");
 		}
 		CountDownLatch latch = new CountDownLatch(nodesToCreate);
-		Set<NodeAbstract> nodes = new HashSet<>();
-		IntStream.range(0, nodesToCreate).forEach( i -> nodes.add(new EchoNode(i==0?"Initiator":"Node" + i, i==0?true:false, latch)));
-		nodes.forEach(node -> node.setupNeighbours(nodes.toArray(new EchoNode[nodes.size()])));
-	}
-	
-	public static void fullGraphElection(int nodesToCreate) {
-		System.out.println("Anzahl der Nodes " + nodesToCreate);
-		if (nodesToCreate < 1) {
-			throw new IllegalArgumentException("There must be at least 1 Node for a loop");
-		}
-		CountDownLatch latch = new CountDownLatch(nodesToCreate);
-		NodeAbstract init = new ElectionNode("Initiator", true, latch , 0);
+		NodeAbstract init = function.apply(latch, 0);
 
 		Set<NodeAbstract> nodes = new HashSet<>();
 		nodes.add(init);
 
 		for (int i = 1; i < nodesToCreate; i++) {
-			nodes.add(new ElectionNode("Node" + i, r.nextBoolean(), latch, i));
+			nodes.add(function.apply(latch, i));
 		}
 		for (NodeAbstract node : nodes) {
-			node.setupNeighbours(nodes.toArray(new ElectionNode[nodes.size()]));
+			node.setupNeighbours(nodes.toArray(new NodeAbstract[nodes.size()]));
 		}
 	}
 
-	public static void tree(int nodesToCreate) {
+	public static void tree(int nodesToCreate, BiFunction<CountDownLatch, Integer, NodeAbstract> function) {
 		System.out.println("Anzahl der Nodes " + nodesToCreate);
 		if (nodesToCreate < 1) {
 			throw new IllegalArgumentException("There must be at least 1 Node for a loop");
 		}
 		CountDownLatch latch = new CountDownLatch(nodesToCreate);
-		EchoNode init = new EchoNode("Initiator", true, latch);
+		NodeAbstract init = function.apply(latch, 0);
 
-		Set<EchoNode> nodes = new HashSet<>();
+		Set<NodeAbstract> nodes = new HashSet<>();
 		nodes.add(init);
 
 		Random r = new Random();
 		for (int i = 1; i < nodesToCreate; i++) {
-			EchoNode newNode = new EchoNode("Node" + i, false, latch);
-			List<EchoNode> possibleNeighbours = new ArrayList<>(nodes);
+			NodeAbstract newNode = function.apply(latch, i);
+			List<NodeAbstract> possibleNeighbours = new ArrayList<>(nodes);
 			newNode.setupNeighbours(possibleNeighbours.get(r.nextInt(possibleNeighbours.size())));
 			nodes.add(newNode);
 		}
@@ -123,63 +105,64 @@ public class Start {
 		System.out.println("init fertig");
 	}
 
-	public static void ellipse(int nodesToCreate) {
+	public static void ellipse(int nodesToCreate, BiFunction<CountDownLatch, Integer, NodeAbstract> function) {
 		System.out.println("Anzahl der Nodes " + nodesToCreate);
 		if (nodesToCreate < 3) {
 			throw new IllegalArgumentException("There must be at least 3 Nodes for a loop");
 		}
 		CountDownLatch latch = new CountDownLatch(nodesToCreate);
-		EchoNode init = new EchoNode("Initiator", true, latch);
+		NodeAbstract init = function.apply(latch, 0);
 
-		EchoNode temp = init;
+		NodeAbstract temp = init;
 		for (int i = 1; i < nodesToCreate; i++) {
-			EchoNode newNode = new EchoNode("Node" + i, false, latch);
+			NodeAbstract newNode = function.apply(latch, i);
 			temp.setupNeighbours(newNode);
 			temp = newNode;
 		}
 		temp.setupNeighbours(init);
 	}
 
-	public static void nodeLoop() {
+	public static void nodeLoop(BiFunction<CountDownLatch, Integer, NodeAbstract> function) {
 		System.out.println("Anzahl der Nodes " + 1);
 		CountDownLatch latch = new CountDownLatch(1);
-		EchoNode init = new EchoNode("Initiator", true, latch);
+		NodeAbstract init = function.apply(latch, 0);
 
-		Set<EchoNode> nodes = new HashSet<>();
+		Set<NodeAbstract> nodes = new HashSet<>();
 		nodes.add(init);
 
 		init.setupNeighbours(init);
 	}
 
-	public static void loopTree(int nodesToCreate) throws IllegalArgumentException {
+	public static void loopTree(int nodesToCreate, BiFunction<CountDownLatch, Integer, NodeAbstract> function)
+			throws IllegalArgumentException {
 		System.out.println("Anzahl der Nodes " + nodesToCreate);
 		if (nodesToCreate < 3) {
 			throw new IllegalArgumentException("There must be at least 3 Nodes for a loop");
 		}
 		CountDownLatch latch = new CountDownLatch(nodesToCreate);
-		EchoNode init = new EchoNode("Initiator", true, latch);
-		EchoNode node1 = new EchoNode("Node1", false, latch);
-		EchoNode node2 = new EchoNode("Node2", false, latch);
+		NodeAbstract init = function.apply(latch, 0);
+		NodeAbstract node1 = function.apply(latch, 1);
+		NodeAbstract node2 = function.apply(latch, 2);
 
-		Set<EchoNode> nodes = new HashSet<>();
+		Set<NodeAbstract> nodes = new HashSet<>();
 		nodes.add(init);
 		nodes.add(node1);
 		nodes.add(node2);
 
 		Random r = new Random();
 		for (int i = 3; i < nodesToCreate; i++) {
-			EchoNode newNode = new EchoNode("Node" + i, false, latch);
+			NodeAbstract newNode = function.apply(latch, i);
 			int neighboursCount = r.nextInt(nodes.size()) + 1;
-			List<EchoNode> possibleNeighbours = new ArrayList<>(nodes);
-			Set<EchoNode> neighbours = new HashSet<>();
+			List<NodeAbstract> possibleNeighbours = new ArrayList<>(nodes);
+			Set<NodeAbstract> neighbours = new HashSet<>();
 			for (int j = 0; j < neighboursCount; j++) {
-				EchoNode newNeighbour = possibleNeighbours.get(r.nextInt(possibleNeighbours.size()));
+				NodeAbstract newNeighbour = possibleNeighbours.get(r.nextInt(possibleNeighbours.size()));
 				possibleNeighbours.remove(newNeighbour);
 				neighbours.add(newNeighbour);
 			}
 			nodes.add(newNode);
 			newNode.setupNeighbours(neighbours.toArray(new Node[neighbours.size()]));
-			for (EchoNode nodes2 : neighbours) {
+			for (NodeAbstract nodes2 : neighbours) {
 				System.out.println(nodes2);
 			}
 		}
