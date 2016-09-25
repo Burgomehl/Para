@@ -13,14 +13,14 @@ public class ElectionNode extends NodeAbstract {
 	protected Node wakeupNeighbour;
 	protected Object data;
 
-	private Integer strength;
+	private AtomicInteger strength;
 	private AtomicBoolean restart = new AtomicBoolean(true);
 	private boolean echo = false;
 
 	public ElectionNode(String name, boolean initiator, CountDownLatch startLatch, int strength) {
 		super(name, initiator, startLatch);
 		if (initiator) {
-			this.strength = strength;
+			this.strength = new AtomicInteger(strength);
 			start();
 		}
 		countedEchos = new AtomicInteger(0);
@@ -28,23 +28,14 @@ public class ElectionNode extends NodeAbstract {
 
 	@Override
 	public synchronized void wakeup(Node neighbour, int strength) {
-		if (this.strength == null) {
-			this.strength = strength;
+		if (this.strength == null || this.strength.get() < strength) {
+			this.strength = new AtomicInteger(strength);
 			this.data = null;
 			countedEchos.set(0);
 			wakeupNeighbour = neighbour;
 			restart.set(true);
 		}
-		synchronized (this.strength) {
-			if (this.strength < strength) {
-				this.strength = strength;
-				this.data = null;
-				countedEchos.set(0);
-				wakeupNeighbour = neighbour;
-				restart.set(true);
-			}
-		}
-		if (this.strength == strength) {
+		if (this.strength.get() == strength) {
 			System.out.println(this + " will increment counter in wakeup from " + countedEchos.get());
 			countedEchos.incrementAndGet();
 			System.out.println(this + " has incremented counter in wakeup to " + countedEchos.get());
@@ -66,13 +57,9 @@ public class ElectionNode extends NodeAbstract {
 					if (restart.getAndSet(false)) {
 						System.out.println(this + " start/restart");
 						for (Node node : neighbours) {
-							int tempStrength;
-							synchronized (this.strength) {
-								if (restart.get()) {
-									break;
-								}
-								System.out.println(" ");
-								tempStrength = this.strength;
+							int tempStrength = this.strength.get();
+							if (restart.get()) {
+								break;
 							}
 							if (node != wakeupNeighbour) {
 								node.wakeup(this, tempStrength);
@@ -98,7 +85,7 @@ public class ElectionNode extends NodeAbstract {
 						if (!echo) {
 							System.out.println("Fertig: " + this + " wurde gewählt");
 							restart.set(echo = true);
-							strength += 1;
+							strength.incrementAndGet();
 							this.data = null;
 						} else {
 							System.out.println("Fertig: " + data);
@@ -107,7 +94,7 @@ public class ElectionNode extends NodeAbstract {
 						}
 					} else {
 						wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""),
-								strength);
+								strength.get());
 					}
 
 					if (countedEchos.get() >= neighbours.size()) {
@@ -137,7 +124,7 @@ public class ElectionNode extends NodeAbstract {
 	}
 
 	public synchronized void echo(Node neighbour, Object data, int strength) {
-		if (this.strength == strength) {
+		if (this.strength.get() == strength) {
 			if (this.data == null) {
 				this.data = data;
 			} else {
