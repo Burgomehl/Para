@@ -1,6 +1,5 @@
 package node;
 
-
 /**
  * This interface defines the methods of each node participating in the echo
  * algorithm. These methods can be called by the neighbours of a node.
@@ -17,7 +16,7 @@ public interface Node {
 	 * case the neighbour was previously unknown to this node although the
 	 * neighbour itself knows this node).
 	 * 
-	 * @param neighbour 
+	 * @param neighbour
 	 */
 	public void hello(Node neighbour);
 
@@ -26,7 +25,7 @@ public interface Node {
 	 * 
 	 * @param neighbour
 	 */
-	public void wakeup(Node neighbour, int strength,boolean isElection);
+	public void wakeup(Node neighbour, String initiatorName, boolean isElection);
 
 	/**
 	 * Incoming "echo" message from a neighbour. The neighbour can also send
@@ -37,6 +36,6 @@ public interface Node {
 	 * @param neighbour
 	 * @param data
 	 */
-	public void echo(Node neighbour, Object data, int strength, boolean isElection);
+	public void echo(Node neighbour, Object data, String initiatorName, boolean isElection);
 
 }
