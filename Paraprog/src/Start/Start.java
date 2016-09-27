@@ -26,6 +26,7 @@ public class Start {
 			System.out.println("graph with a loop 2 parameters: lt and a number with min 3");
 			System.out.println("full graph with two paramters: fg and a number with min 1");
 			System.out.println("full graph with loops with two paramters: fgwl and a number with min 1");
+			System.out.println("Example: echo fg 100");
 		} else {
 			if (!args[0].equals("echo") && !args[0].equals("election")) {
 				System.out.println("You have to decide between 'echo' and 'elction' as first paramter ");
