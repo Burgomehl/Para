@@ -9,7 +9,7 @@ public class Testing {
 	static Random r = new Random();
 
 	public static void main(String[] args) throws InterruptedException {
-		Start.ellipse(10,(latch,i)-> new ElectionNode("Node"+i,(i==0?true: r.nextBoolean()), latch));
+		Start.ellipse(3,(latch,i)-> new ElectionNode("Node"+i,(i==0?true: r.nextBoolean()), latch));
 	}
 
 }
