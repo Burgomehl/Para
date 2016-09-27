@@ -20,7 +20,7 @@ public class EchoNode extends NodeAbstract {
 	}
 
 	@Override
-	public synchronized void wakeup(Node neighbour, int strength,boolean isElection) {
+	public synchronized void wakeup(Node neighbour, String initiatorName, boolean isElection) {
 		countedEchos.incrementAndGet();
 		System.out.println("wakeup von " + neighbour + " an " + this + ", anzahl Nachrichten: " + countedEchos.get()
 				+ "/" + neighbours.size());
@@ -38,7 +38,7 @@ public class EchoNode extends NodeAbstract {
 			for (Node node : neighbours) {
 				System.out.println(" ");
 				if (node != wakeupNeighbour) {
-					node.wakeup(this, 0,false);
+					node.wakeup(this, null, false);
 				}
 			}
 		} catch (InterruptedException e) {
@@ -56,14 +56,14 @@ public class EchoNode extends NodeAbstract {
 			if (initiator) {
 				System.out.println("Fertig: " + data);
 			} else {
-				wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""), 0,false);
+				wakeupNeighbour.echo(this, wakeupNeighbour + "-" + this + (data != null ? "," + data : ""), null, false);
 			}
 		}
 
 	}
 
 	@Override
-	public synchronized void echo(Node neighbour, Object data, int strength,boolean isElection) {
+	public synchronized void echo(Node neighbour, Object data, String initiatorName, boolean isElection) {
 		if (this.data == null) {
 			this.data = data;
 		} else {

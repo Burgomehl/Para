@@ -34,7 +34,7 @@ public class Start {
 				BiFunction<CountDownLatch, Integer, NodeAbstract> function = (latch,
 						i) -> new EchoNode((i == 0 ? "Initiator" : "Node") + i, (i == 0 ? true : false), latch);
 				if (args[0].equals("election")) {
-					function = (latch, i) -> new ElectionNode("Node" + i, (i==0?true:r.nextBoolean()), latch, i);
+					function = (latch, i) -> new ElectionNode("Node" + i, (i==0?true:r.nextBoolean()), latch);
 				}
 				if (args.length == 3) {
 					nodes = Integer.parseInt(args[2]);

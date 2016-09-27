@@ -4,8 +4,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.w3c.dom.Attr;
-
 import node.Node;
 import node.NodeAbstract;
 
@@ -16,7 +14,7 @@ public class ElectionNode extends NodeAbstract {
 		protected Node wakeupNeighbour;
 		protected Object data;
 
-		private AtomicInteger strength = new AtomicInteger(0);
+		private String initiatorName;
 		private AtomicBoolean restart = new AtomicBoolean(false);
 		private boolean echo = false;
 
@@ -44,14 +42,6 @@ public class ElectionNode extends NodeAbstract {
 			this.data = data;
 		}
 
-		public AtomicInteger getStrength() {
-			return strength;
-		}
-
-		public void setStrength(AtomicInteger strength) {
-			this.strength = strength;
-		}
-
 		public AtomicBoolean getRestart() {
 			return restart;
 		}
@@ -67,16 +57,25 @@ public class ElectionNode extends NodeAbstract {
 		public void setEcho(boolean echo) {
 			this.echo = echo;
 		}
+
+		public synchronized String getInitiatorName() {
+			return initiatorName;
+		}
+
+		public synchronized void setInitiatorName(String initiatorName) {
+			this.initiatorName = initiatorName;
+		}
 	}
 
 	private Attributes actual;
 	private Attributes echo = new Attributes();
 	private Attributes election = new Attributes();
 
-	public ElectionNode(String name, boolean initiator, CountDownLatch startLatch, int strength) {
+	public ElectionNode(String name, boolean initiator, CountDownLatch startLatch) {
 		super(name, initiator, startLatch);
 		if (initiator) {
-			election.setStrength(new AtomicInteger(strength));
+			election.setInitiatorName(name);
+			echo.setInitiatorName(name);
 			election.getRestart().set(true);
 			start();
 		}
@@ -85,29 +84,28 @@ public class ElectionNode extends NodeAbstract {
 	}
 
 	@Override
-	public synchronized void wakeup(Node neighbour, int strength, boolean isElection) {
+	public synchronized void wakeup(Node neighbour, String initiatorName, boolean isElection) {
 		if (isElection) {
 			actual = election;
-			if (actual.getStrength() == null || actual.getStrength().get() < strength) {
-				actual.setStrength(new AtomicInteger(strength));
+			if (actual.getInitiatorName() == null || initiatorName.compareTo(actual.getInitiatorName()) > 0) {
+				actual.setInitiatorName(initiatorName);
 				actual.setData(null);
 				actual.getCountedEchos().set(0);
 				actual.setWakeupNeighbour(neighbour);
 				actual.getRestart().set(true);
 			}
+			
+			if (initiatorName.equals(actual.getInitiatorName())) {
+				System.out.println(this + " will increment counter in wakeup from " + actual.getCountedEchos().get());
+				actual.getCountedEchos().incrementAndGet();
+				System.out.println(this + " has incremented counter in wakeup to " + actual.getCountedEchos().get());
+			}
 		} else {
 			actual = echo;
-			if(actual.getWakeupNeighbour() == null){
-				
-			}
 			actual.setWakeupNeighbour(neighbour);
-			
+			actual.getCountedEchos().incrementAndGet();			
 		}
-		if (actual.getStrength().get() == strength) {
-			System.out.println(this + " will increment counter in wakeup from" + actual.getCountedEchos().get());
-			actual.getCountedEchos().incrementAndGet();
-			System.out.println(this + " has incremented counter in wakeup to" + actual.getCountedEchos().get());
-		}
+		
 		System.out.println(this + " received wakeup from " + neighbour + "counter: " + actual.getCountedEchos().get()
 				+ "|" + neighbours.size() + " neustart: " + actual.getRestart().get());
 		if (State.NEW == this.getState()) {
@@ -132,7 +130,7 @@ public class ElectionNode extends NodeAbstract {
 							try {
 								wait();
 								System.out.println(this + ":" + actual.getCountedEchos().get() + "/" + neighbours.size()
-										+ " Strength: " + actual.getStrength());
+										+ " Initiator: " + actual.getInitiatorName());
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
@@ -154,7 +152,6 @@ public class ElectionNode extends NodeAbstract {
 							System.out.println("Fertig: " + this + " wurde gewählt");
 							actual.getRestart().set(false);
 							echo.getRestart().set(true);
-//							actual.getStrength().incrementAndGet();
 							actual.getCountedEchos().set(0);
 							actual.setData(null);
 							echo.setWakeupNeighbour(null);
@@ -169,7 +166,7 @@ public class ElectionNode extends NodeAbstract {
 						actual.getWakeupNeighbour().echo(this,
 								actual.getWakeupNeighbour() + "-" + this
 										+ (actual.getData() != null ? "," + actual.getData() : ""),
-								actual.getStrength().get(), isElection);
+								actual.getInitiatorName(), isElection);
 					}
 
 //					if (actual.getCountedEchos().get() >= neighbours.size()) {
@@ -194,12 +191,12 @@ public class ElectionNode extends NodeAbstract {
 			}
 			System.out.println(this + " start/restart");
 			for (Node node : neighbours) {
-				int tempStrength = att.getStrength().get();
+				String initiatorName = att.getInitiatorName();
 				if (att.getRestart().get()) {
 					break;
 				}
 				if (node != att.getWakeupNeighbour()) {
-					node.wakeup(this, tempStrength, isElection);
+					node.wakeup(this, initiatorName, isElection);
 				}
 			}
 		}
@@ -217,8 +214,8 @@ public class ElectionNode extends NodeAbstract {
 		startLatch.countDown();
 	}
 
-	public synchronized void echo(Node neighbour, Object data, int strength, boolean isElection) {
-		if (!isElection || actual.getStrength().get() == strength) {
+	public synchronized void echo(Node neighbour, Object data, String initiatorName, boolean isElection) {
+		if (!isElection || actual.getInitiatorName().equals(initiatorName)) {
 			if (actual.getData() == null) {
 				actual.setData(data);
 			} else {
@@ -230,12 +227,12 @@ public class ElectionNode extends NodeAbstract {
 			System.out.println(this + " has incremented counter in echo to " + actual.getCountedEchos().get());
 			notifyAll();
 		} else {
-			System.out.println(this + " echo ging daneben " + actual.getStrength() + "/" + strength);
+			System.out.println(this + " echo ging daneben " + actual.getInitiatorName() + "/" + initiatorName);
 		}
 	}
 
 	@Override
 	public String toString() {
-		return super.toString() + "(" + election.getStrength() + ")";
+		return super.toString() + "(" + election.getInitiatorName() + ")";
 	}
 }
