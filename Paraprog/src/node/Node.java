@@ -26,7 +26,7 @@ public interface Node {
 	 * 
 	 * @param neighbour
 	 */
-	public void wakeup(Node neighbour, int strength);
+	public void wakeup(Node neighbour, int strength,boolean isElection);
 
 	/**
 	 * Incoming "echo" message from a neighbour. The neighbour can also send
@@ -37,6 +37,6 @@ public interface Node {
 	 * @param neighbour
 	 * @param data
 	 */
-	public void echo(Node neighbour, Object data, int strength);
+	public void echo(Node neighbour, Object data, int strength, boolean isElection);
 
 }
