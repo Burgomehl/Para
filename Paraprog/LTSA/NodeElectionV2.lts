@@ -1,0 +1,255 @@
+const False = 0
+const True = 1
+const A = 1
+const B = 2
+const C = 3
+const D = 4
+range Bool = False..True
+const CountMax = 4
+
+AStart = (aStartNode -> AInNode[0]),
+AStNode[x:0..3] = ( 
+	when (x == 0) aSetupNeighbors -> aHelloB -> aHelloC -> AStNode[x+1] |
+	when (x == 1) aWakeupB -> AStNode[x+1] | 
+	when (x == 1) aWakeupC -> AStNode[x+1] |
+	when (x == 2) aEchoB -> AStNode[x+1] |
+	when (x == 2) aEchoC -> AStNode[x+1] |
+	when (x == 3) restart -> AStart |
+	aReset -> AStNode[1]),
+AInNode[x:0..2] = (
+	when (x == 0) aSetupNeighbors -> aHelloB -> aHelloC -> AInNode[x+1] |
+	when (x == 1) aWakeupBC -> AInNode[x+1] | 
+	when (x == 2) restart -> AStart |
+	aReset -> AStNode[1]).
+
+BStart = (bStartNode -> BStNode[0]),
+BStNode[x:0..3] = (
+	when (x == 0) bSetupNeighbors -> bHelloA -> bHelloD -> BStNode[x+1] |
+	when (x == 1) bWakeupA -> BStNode[x+1] | 
+	when (x == 1) bWakeupD -> BStNode[x+1] |
+	when (x == 2) bEchoA -> BStNode[x+1] |
+	when (x == 2) bEchoD -> BStNode[x+1] |
+	when (x == 3) restart -> BStart |
+	bReset -> BStNode[1]),
+BInNode[x:0..2] = (
+	when (x == 0) bSetupNeighbors -> bHelloA -> bHelloD -> BInNode[x+1] |
+	when (x == 1) bWakeupAD -> BInNode[x+1] | 
+	when (x == 2) restart -> BStart |
+	bReset -> BStNode[1]).
+
+CStart = (cStartNode -> CStNode[0]),
+CStNode[x:0..3] = (
+	when (x == 0) cSetupNeighbors -> cHelloD -> cHelloA -> CStNode[x+1] |
+	when (x == 1) cWakeupA -> CStNode[x+1] |
+	when (x == 1) cWakeupD -> CStNode[x+1] |
+	when (x == 2) cEchoA -> CStNode[x+1] | 
+	when (x == 2) cEchoD -> CStNode[x+1] |
+	when (x == 3) restart -> CStart |
+	cReset -> CStNode[1]),
+CInNode[x:0..2] = (
+	when (x == 0) cSetupNeighbors -> cHelloD -> cHelloA -> CInNode[x+1] |
+	when (x == 1) cWakeupAD -> CInNode[x+1] | 
+	when (x == 2) restart -> CStart |
+	cReset -> CStNode[1]).
+
+
+DStart = (dStartNode -> DInNode[0]),
+DStNode[x:0..3] = (
+	when (x == 0) dSetupNeighbors -> dHelloC -> dHelloB -> DStNode[x+1] |
+	when (x == 1) dWakeupB -> DStNode[x+1] |
+	when (x == 1) dWakeupC -> DStNode[x+1] |
+	when (x == 2) dEchoB -> DStNode[x+1] | 
+	when (x == 2) dEchoC -> DStNode[x+1] |
+	when (x == 3) restart -> DStart |
+	dReset -> DStNode[1]),
+DInNode[x:0..2] = (
+	when (x == 0) dSetupNeighbors -> dHelloC -> dHelloB -> DInNode[x+1] |
+	when (x == 1) dWakeupBC -> DInNode[x+1] | 
+	when (x == 2) restart -> DStart |
+	dReset -> DStNode[1]).
+
+NodeLock = Locked[0][0][0][0][True][False][False][True][4],
+Locked[echosA:0..2][echosB:0..2][echosC:0..2][echosD:0..2][canA:Bool][canB:Bool][canC:Bool][canD:Bool][countLatch:0..CountMax] = (
+	aSetupNeighbors -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch-1] |
+	bSetupNeighbors -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch-1] |
+	cSetupNeighbors -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch-1] |
+	dSetupNeighbors -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch-1]
+		
+	| when (canA && echosB != 2 && countLatch == 0) aWakeupB -> Locked[echosA][echosB+1][echosC][echosD][False][True][canC][canD][countLatch]
+	| when (canA && echosC != 2 && countLatch == 0) aWakeupC -> Locked[echosA][echosB][echosC+1][echosD][False][canB][True][canD][countLatch]
+	| when (canA && echosB == 2 && countLatch == 0) aWakeupB -> Locked[echosA][echosB][echosC][echosD][False][True][canC][canD][countLatch]
+	| when (canA && echosC == 2 && countLatch == 0) aWakeupC -> Locked[echosA][echosB][echosC][echosD][False][canB][True][canD][countLatch]
+	| when (canA && countLatch == 0) aWakeupBC -> Locked[echosA][echosB+1][echosC+1][echosD][False][True][True][canD][countLatch]
+	| when (echosA == 2 && countLatch == 0) restart -> NodeLock
+	| when (echosA == 2 && echosB != 2 && countLatch == 0) aEchoB -> Locked[echosA][echosB+1][echosC][echosD][canA][canB][canC][canD][countLatch]
+	| when (echosA == 2 && echosC != 2 && countLatch == 0) aEchoC -> Locked[echosA][echosB][echosC+1][echosD][canA][canB][canC][canD][countLatch]
+	| when (echosA == 2 && echosB == 2 && countLatch == 0) aEchoB -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
+	| when (echosA == 2 && echosC == 2 && countLatch == 0) aEchoC -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
+
+	| when (canB && echosD != 2 && countLatch == 0) bWakeupD -> Locked[echosA][echosB][echosC][echosD+1][canA][False][canC][True][countLatch] 
+	| when (canB && echosA != 2 && countLatch == 0) bWakeupA -> Locked[echosA+1][echosB][echosC][echosD][True][False][canC][canD][countLatch]
+	| when (canB && echosD == 2 && countLatch == 0) bWakeupD -> Locked[echosA][echosB][echosC][echosD][canA][False][canC][True][countLatch] 
+	| when (canB && echosA == 2 && countLatch == 0) bWakeupA -> Locked[echosA][echosB][echosC][echosD][True][False][canC][canD][countLatch]
+	| when (canB && countLatch == 0) bWakeupAD -> Locked[echosA+1][echosB][echosC][echosD+1][True][False][canC][True][countLatch]
+	| when (echosB == 2 && countLatch == 0) restart -> NodeLock
+	| when (echosB == 2 && echosA != 2 && countLatch == 0) bEchoA -> Locked[echosA+1][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
+	| when (echosB == 2 && echosD != 2 && countLatch == 0) bEchoD -> Locked[echosA][echosB][echosC][echosD+1][canA][canB][canC][canD][countLatch]
+	| when (echosB == 2 && echosA == 2 && countLatch == 0) bEchoA -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
+	| when (echosB == 2 && echosD == 2 && countLatch == 0) bEchoD -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
+
+	| when (canC && echosA != 2 && countLatch == 0) cWakeupA -> Locked[echosA+1][echosB][echosC][echosD][True][canB][False][canD][countLatch]
+	| when (canC && echosD != 2 && countLatch == 0) cWakeupD -> Locked[echosA][echosB][echosC][echosD+1][canA][canB][False][True][countLatch]
+	| when (canC && echosA == 2 && countLatch == 0) cWakeupA -> Locked[echosA+1][echosB][echosC][echosD][True][canB][False][canD][countLatch]
+	| when (canC && echosD == 2 && countLatch == 0) cWakeupD -> Locked[echosA][echosB][echosC][echosD+1][canA][canB][False][True][countLatch]
+	| when (canC && countLatch == 0) cWakeupAD -> Locked[echosA+1][echosB][echosC][echosD+1][True][canB][False][True][countLatch]
+	| when (echosC == 2 && countLatch == 0) restart -> NodeLock
+	| when (echosC == 2 && echosA != 2 && countLatch == 0) cEchoA -> Locked[echosA+1][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
+	| when (echosC == 2 && echosD != 2 && countLatch == 0) cEchoD -> Locked[echosA][echosB][echosC][echosD+1][canA][canB][canC][canD][countLatch]
+	| when (echosC == 2 && echosA == 2 && countLatch == 0) cEchoA -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
+	| when (echosC == 2 && echosD == 2 && countLatch == 0) cEchoD -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
+
+	| when (canD && echosB != 2 && countLatch == 0) dWakeupB -> Locked[echosA][echosB+1][echosC][echosD][canA][True][canC][False][countLatch]
+	| when (canD && echosC != 2 && countLatch == 0) dWakeupC -> Locked[echosA][echosB][echosC+1][echosD][canA][canB][True][False][countLatch]
+	| when (canD && echosB == 2 && countLatch == 0) dWakeupB -> Locked[echosA][echosB][echosC][echosD][canA][True][canC][False][countLatch]
+	| when (canD && echosC == 2 && countLatch == 0) dWakeupC -> Locked[echosA][echosB][echosC][echosD][canA][canB][True][False][countLatch]
+	| when (canD && countLatch == 0) dWakeupBC -> Locked[echosA][echosB+1][echosC+1][echosD][canA][True][True][False][countLatch]
+	| when (echosD == 2 && countLatch == 0) restart -> NodeLock
+	| when (echosD == 2 && echosB != 2 && countLatch == 0) dEchoB -> Locked[echosA][echosB+1][echosC][echosD][canA][canB][canC][canD][countLatch]
+	| when (echosD == 2 && echosC != 2 && countLatch == 0) dEchoC -> Locked[echosA][echosB][echosC+1][echosD][canA][canB][canC][canD][countLatch]
+	| when (echosD == 2 && echosB == 2 && countLatch == 0) dEchoB -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
+	| when (echosD == 2 && echosC == 2 && countLatch == 0) dEchoC -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
+
+	| aReset -> Locked[1][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
+	| bReset -> Locked[echosA][1][echosC][echosD][canA][canB][canC][canD][countLatch]
+	| cReset -> Locked[echosA][echosB][1][echosD][canA][canB][canC][canD][countLatch]
+	| dReset -> Locked[echosA][echosB][echosC][1][canA][canB][canC][canD][countLatch]).
+
+StrengthLock = Str[2][0][0][1][0][0][0][0],
+Str[strA:0..2][strB:0..2][strC:0..2][strD:0..2][wA:0..4][wB:0..4][wC:0..4][wD:0..4] =
+	( when ((wA == 0 | wA == C) && strB == 0) aWakeupB -> Str[strA][strA][strC][strD][wA][A][wC][wD]
+	| when ((wA == 0 | wA == C) && strA > strB && strB != 0) aWakeupB -> bReset -> Str[strA][strA][strC][strD][wA][A][wC][wD]
+	| when ((wA == 0 | wA == C) && strA < strB && strB != 0) aWakeupB -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when ((wA == 0 | wA == B) && strC == 0) aWakeupC -> Str[strA][strB][strA][strD][wA][wB][A][wD]
+	| when ((wA == 0 | wA == B) && strA > strC && strC != 0) aWakeupC -> cReset -> Str[strA][strB][strA][strD][wA][wB][A][wD]
+	| when ((wA == 0 | wA == B) && strA < strC && strC != 0) aWakeupC -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wB == D && wA == C) aWakeupB -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wC == D && wA == B) aWakeupC -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wA == B) aEchoB -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wA == C) aEchoC -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (strA > strC && strC != 0 && strA > strB && strB != 0) aWakeupBC -> bReset -> cReset -> Str[strA][strA][strA][strD][wA][A][A][wD]
+    | when (strA > strC && strC != 0 && strB == 0) aWakeupBC -> cReset -> Str[strA][strA][strA][strD][wA][A][A][wD]
+ 	| when (strA > strB && strB != 0 && strC == 0) aWakeupBC -> bReset -> Str[strA][strA][strA][strD][wA][A][A][wD]
+	| when (strA < strC && strC != 0 && strA > strB && strB != 0) aWakeupBC -> bReset -> Str[strA][strA][strC][strD][wA][A][wC][wD]
+	| when (strA > strC && strC != 0 && strA < strB && strB != 0) aWakeupBC -> cReset -> Str[strA][strB][strA][strD][wA][wB][A][wD]
+    | when (strA < strC && strC != 0 && strB == 0) aWakeupBC -> cReset -> Str[strA][strB][strA][strD][wA][wB][A][wD]
+	| when (strA < strB && strB != 0 && strC == 0) aWakeupBC -> bReset -> Str[strA][strA][strC][strD][wA][A][wC][wD]
+ 	| when (strC == 0 && strB == 0) aWakeupBC -> Str[strA][strA][strA][strD][wA][A][A][wD]
+	| when (strA < strC && strC != 0 && strA < strB && strB != 0) aWakeupBC -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+
+	| when ((wB == 0 | wB == A) && strD == 0) bWakeupD -> Str[strA][strB][strC][strB][wA][wB][wC][B]
+	| when ((wB == 0 | wB == A) && strB > strD && strD != 0) bWakeupD -> dReset -> Str[strA][strB][strC][strB][wA][wB][wC][B]
+	| when ((wB == 0 | wB == A) && strB < strD && strD != 0) bWakeupD -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when ((wB == 0 | wB == D) && strA == 0) bWakeupA -> Str[strB][strB][strC][strD][B][wB][wC][wD]
+	| when ((wB == 0 | wB == D) && strB > strA && strA != 0) bWakeupA -> aReset -> Str[strB][strB][strC][strD][B][wB][wC][wD]
+	| when ((wB == 0 | wB == D) && strB < strA && strA != 0) bWakeupA -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wA == C && wB == D) bWakeupA -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wD == C && wB == A) bWakeupD -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wB == A) bEchoA -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wB == D) bEchoD -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (strB > strD && strD != 0 && strB > strA && strA != 0) bWakeupAD -> aReset -> dReset -> Str[strB][strB][strC][strB][B][wB][wC][B]
+    | when (strB > strD && strD != 0 && strA == 0) bWakeupAD -> dReset -> Str[strB][strB][strC][strB][B][wB][wC][B]
+ 	| when (strB > strA && strA != 0 && strD == 0) bWakeupAD -> aReset -> Str[strB][strB][strC][strB][B][wB][wC][B]
+	| when (strB < strD && strD != 0 && strB > strA && strA != 0) bWakeupAD -> aReset -> Str[strB][strB][strC][strD][B][wB][wC][wD]
+	| when (strB > strD && strD != 0 && strB < strA && strA != 0) bWakeupAD -> dReset -> Str[strA][strB][strC][strB][wA][wB][wC][B]
+    | when (strB < strD && strD != 0 && strA == 0) bWakeupAD -> dReset -> Str[strA][strB][strC][strB][wA][wB][wC][B]
+	| when (strB < strA && strA != 0 && strD == 0) bWakeupAD -> aReset -> Str[strB][strB][strC][strD][B][wB][wC][wD]
+ 	| when (strD == 0 && strA == 0) bWakeupAD -> Str[strB][strB][strC][strB][B][wB][wC][B]
+	| when (strB < strD && strD != 0 && strB < strA && strA != 0) bWakeupAD -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+
+	| when ((wC == 0 | wC == A) && strD == 0) cWakeupD -> Str[strA][strB][strC][strC][wA][wB][wC][C]
+	| when ((wC == 0 | wC == A) && strC > strD && strD != 0) cWakeupD -> dReset -> Str[strA][strB][strC][strC][wA][wB][wC][C]
+	| when ((wC == 0 | wC == A) && strC < strD && strD != 0) cWakeupD -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when ((wC == 0 | wC == D) && strA == 0) cWakeupA -> Str[strC][strB][strC][strD][C][wB][wC][wD]
+	| when ((wC == 0 | wC == D) && strC > strA && strA != 0) cWakeupA -> aReset -> Str[strC][strB][strC][strD][C][wB][wC][wD]
+	| when ((wC == 0 | wC == D) && strC < strA && strA != 0) cWakeupA -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wA == B && wC == D) cWakeupA -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wD == B && wC == A) cWakeupD -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wC == A) cEchoA -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wC == D) cEchoD -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (strC > strD && strD != 0 && strC > strA && strA != 0) cWakeupAD -> aReset -> dReset -> Str[strC][strB][strC][strC][C][wB][wC][C]
+    | when (strC > strD && strD != 0 && strA == 0) cWakeupAD -> dReset -> Str[strC][strB][strC][strC][C][wB][wC][C]
+ 	| when (strC > strA && strA != 0 && strD == 0) cWakeupAD -> aReset -> Str[strC][strB][strC][strC][C][wB][wC][C]
+	| when (strC < strD && strD != 0 && strC > strA && strA != 0) cWakeupAD -> aReset -> Str[strC][strB][strC][strD][C][wB][wC][wD]
+	| when (strC > strD && strD != 0 && strC < strA && strA != 0) cWakeupAD -> dReset -> Str[strA][strB][strC][strC][wA][wB][wC][C]
+    | when (strC < strD && strD != 0 && strA == 0) cWakeupAD -> dReset -> Str[strA][strB][strC][strC][wA][wB][wC][C]
+	| when (strC < strA && strA != 0 && strD == 0) cWakeupAD -> aReset -> Str[strC][strB][strC][strD][C][wB][wC][wD]
+ 	| when (strD == 0 && strA == 0) bWakeupAD -> Str[strC][strB][strC][strC][C][wB][wC][C]
+	| when (strC < strD && strD != 0 && strC < strA && strA != 0) cWakeupAD -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+
+	| when ((wD == 0 | wD == C) && strB == 0) dWakeupB -> Str[strA][strD][strC][strD][wA][D][wC][wD]
+	| when ((wD == 0 | wD == C) && strD > strB && strB != 0) dWakeupB -> bReset -> Str[strA][strD][strC][strD][wA][D][wC][wD]
+	| when ((wD == 0 | wD == C) && strD < strB && strB != 0) dWakeupB -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when ((wD == 0 | wD == B) && strC == 0) dWakeupC -> Str[strA][strB][strD][strD][wA][wB][D][wD]
+	| when ((wD == 0 | wD == B) && strD > strC && strC != 0) dWakeupC -> cReset -> Str[strA][strB][strD][strD][wA][wB][D][wD]
+	| when ((wD == 0 | wD == B) && strD < strC && strC != 0) dWakeupC -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wB == A && wD == C) dWakeupB -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wC == A && wD == B) dWakeupC -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wD == B) dEchoB -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (wD == C) dEchoC -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+	| when (strD > strC && strC != 0 && strD > strB && strB != 0) dWakeupBC -> bReset -> cReset -> Str[strA][strD][strD][strD][wA][D][D][wD]
+    | when (strD > strC && strC != 0 && strB == 0) dWakeupBC -> cReset -> Str[strA][strD][strD][strD][wA][D][D][wD]
+ 	| when (strD > strB && strB != 0 && strC == 0) dWakeupBC -> bReset -> Str[strA][strD][strD][strD][wA][D][D][wD]
+	| when (strD < strC && strC != 0 && strD > strB && strB != 0) dWakeupBC -> bReset -> Str[strA][strD][strC][strD][wA][D][wC][wD]
+	| when (strD > strC && strC != 0 && strD < strB && strB != 0) dWakeupBC -> cReset -> Str[strA][strB][strD][strD][wA][wB][D][wD]
+    | when (strD < strC && strC != 0 && strB == 0) dWakeupBC -> cReset -> Str[strA][strB][strD][strD][wA][wB][D][wD]
+	| when (strD < strB && strB != 0 && strC == 0) dWakeupBC -> bReset -> Str[strA][strD][strC][strD][wA][D][wC][wD]
+ 	| when (strC == 0 && strB == 0) dWakeupBC -> Str[strA][strD][strD][strD][wA][D][D][wD]
+	| when (strD < strC && strC != 0 && strD < strB && strB != 0) dWakeupBC -> Str[strA][strB][strC][strD][wA][wB][wC][wD]
+
+	| restart -> StrengthLock).
+
+property AOk = AOk[0],
+AOk[x:0..3] = (
+	when (x == 0) aSetupNeighbors -> aHelloB -> aHelloC -> AOk[x+1] |
+	when (x == 1) aWakeupB -> AOk[x+1] |
+	when (x == 1) aWakeupC -> AOk[x+1] |
+	when (x == 1) aWakeupBC -> AOk[x+1] |
+	when (x == 2) aEchoB -> AOk[x+1] |
+	when (x == 2) aEchoC -> AOk[x+1] |
+	when (x >= 2) restart -> AOk[0] |
+	aReset -> AOk[1]).
+
+property BOk = BOk[0],
+BOk[x:0..3] = (
+	when (x == 0) bSetupNeighbors -> bHelloA -> bHelloD -> BOk[x+1] |
+	when (x == 1) bWakeupA -> BOk[x+1] |
+	when (x == 1) bWakeupD -> BOk[x+1] |
+	when (x == 1) bWakeupAD -> BOk[x+1] |
+	when (x == 2) bEchoA -> BOk[x+1] |
+	when (x == 2) bEchoD -> BOk[x+1] |
+	when (x >= 2) restart -> BOk[0] |
+	bReset -> BOk[1]).
+
+property COk = COk[0],
+COk[x:0..3] = (
+	when (x == 0) cSetupNeighbors -> cHelloD -> cHelloA -> COk[x+1] |
+	when (x == 1) cWakeupA -> COk[x+1] |
+	when (x == 1) cWakeupD -> COk[x+1] |
+	when (x == 1) cWakeupAD -> COk[x+1] |
+	when (x == 2) cEchoA -> COk[x+1] |
+	when (x == 2) cEchoD -> COk[x+1] |
+	when (x >= 2) restart -> COk[0] |
+	cReset -> COk[1]).
+
+property DOk = DOk[0],
+DOk[x:0..3] = (
+	when (x == 0) dSetupNeighbors -> dHelloC -> dHelloB -> DOk[x+1] |
+	when (x == 1) dWakeupB -> DOk[x+1] |
+	when (x == 1) dWakeupC -> DOk[x+1] |
+	when (x == 1) dWakeupBC -> DOk[x+1] |
+	when (x == 2) dEchoB -> DOk[x+1] |
+	when (x == 2) dEchoC -> DOk[x+1] |
+	when (x >= 2) restart -> DOk[0] |
+	dReset -> DOk[1]).
+
+||Round = (node:AStart || node:BStart || node:CStart || node:DStart || {node}::NodeLock || {node}::StrengthLock || {node}::AOk || {node}::BOk || {node}::COk || {node}::DOk).
