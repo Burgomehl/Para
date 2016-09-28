@@ -14,12 +14,12 @@ AStNode[x:0..3] = (
 	when (x == 1) aWakeupC -> AStNode[x+1] |
 	when (x == 2) aEchoB -> AStNode[x+1] |
 	when (x == 2) aEchoC -> AStNode[x+1] |
-	when (x == 3) restart -> AStart |
+	when (x == 3) restart -> AStNode[1] |
 	aReset -> AStNode[1]),
 AInNode[x:0..2] = (
 	when (x == 0) aSetupNeighbors -> aHelloB -> aHelloC -> AInNode[x+1] |
 	when (x == 1) aWakeupBC -> AInNode[x+1] | 
-	when (x == 2) restart -> AStart |
+	when (x == 2) restart -> AInNode[1] |
 	aReset -> AStNode[1]).
 
 BStart = (bStartNode -> BStNode[0]),
@@ -29,12 +29,12 @@ BStNode[x:0..3] = (
 	when (x == 1) bWakeupD -> BStNode[x+1] |
 	when (x == 2) bEchoA -> BStNode[x+1] |
 	when (x == 2) bEchoD -> BStNode[x+1] |
-	when (x == 3) restart -> BStart |
+	when (x == 3) restart -> BStNode[1] |
 	bReset -> BStNode[1]),
 BInNode[x:0..2] = (
 	when (x == 0) bSetupNeighbors -> bHelloA -> bHelloD -> BInNode[x+1] |
 	when (x == 1) bWakeupAD -> BInNode[x+1] | 
-	when (x == 2) restart -> BStart |
+	when (x == 2) restart -> BInNode[1] |
 	bReset -> BStNode[1]).
 
 CStart = (cStartNode -> CStNode[0]),
@@ -44,12 +44,12 @@ CStNode[x:0..3] = (
 	when (x == 1) cWakeupD -> CStNode[x+1] |
 	when (x == 2) cEchoA -> CStNode[x+1] | 
 	when (x == 2) cEchoD -> CStNode[x+1] |
-	when (x == 3) restart -> CStart |
+	when (x == 3) restart -> CStNode[1] |
 	cReset -> CStNode[1]),
 CInNode[x:0..2] = (
 	when (x == 0) cSetupNeighbors -> cHelloD -> cHelloA -> CInNode[x+1] |
 	when (x == 1) cWakeupAD -> CInNode[x+1] | 
-	when (x == 2) restart -> CStart |
+	when (x == 2) restart -> CStNode[1] |
 	cReset -> CStNode[1]).
 
 
@@ -60,12 +60,12 @@ DStNode[x:0..3] = (
 	when (x == 1) dWakeupC -> DStNode[x+1] |
 	when (x == 2) dEchoB -> DStNode[x+1] | 
 	when (x == 2) dEchoC -> DStNode[x+1] |
-	when (x == 3) restart -> DStart |
+	when (x == 3) restart -> DStNode[1] |
 	dReset -> DStNode[1]),
 DInNode[x:0..2] = (
 	when (x == 0) dSetupNeighbors -> dHelloC -> dHelloB -> DInNode[x+1] |
 	when (x == 1) dWakeupBC -> DInNode[x+1] | 
-	when (x == 2) restart -> DStart |
+	when (x == 2) restart -> DInNode[1] |
 	dReset -> DStNode[1]).
 
 NodeLock = Locked[0][0][0][0][True][False][False][True][4],
@@ -80,7 +80,7 @@ Locked[echosA:0..2][echosB:0..2][echosC:0..2][echosD:0..2][canA:Bool][canB:Bool]
 	| when (canA && echosB == 2 && countLatch == 0) aWakeupB -> Locked[echosA][echosB][echosC][echosD][False][True][canC][canD][countLatch]
 	| when (canA && echosC == 2 && countLatch == 0) aWakeupC -> Locked[echosA][echosB][echosC][echosD][False][canB][True][canD][countLatch]
 	| when (canA && countLatch == 0) aWakeupBC -> Locked[echosA][echosB+1][echosC+1][echosD][False][True][True][canD][countLatch]
-	| when (echosA == 2 && countLatch == 0) restart -> NodeLock
+	| when (echosA == 2 && countLatch == 0) restart -> Locked[0][0][0][0][True][False][False][True][0]
 	| when (echosA == 2 && echosB != 2 && countLatch == 0) aEchoB -> Locked[echosA][echosB+1][echosC][echosD][canA][canB][canC][canD][countLatch]
 	| when (echosA == 2 && echosC != 2 && countLatch == 0) aEchoC -> Locked[echosA][echosB][echosC+1][echosD][canA][canB][canC][canD][countLatch]
 	| when (echosA == 2 && echosB == 2 && countLatch == 0) aEchoB -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
@@ -91,7 +91,7 @@ Locked[echosA:0..2][echosB:0..2][echosC:0..2][echosD:0..2][canA:Bool][canB:Bool]
 	| when (canB && echosD == 2 && countLatch == 0) bWakeupD -> Locked[echosA][echosB][echosC][echosD][canA][False][canC][True][countLatch] 
 	| when (canB && echosA == 2 && countLatch == 0) bWakeupA -> Locked[echosA][echosB][echosC][echosD][True][False][canC][canD][countLatch]
 	| when (canB && countLatch == 0) bWakeupAD -> Locked[echosA+1][echosB][echosC][echosD+1][True][False][canC][True][countLatch]
-	| when (echosB == 2 && countLatch == 0) restart -> NodeLock
+	| when (echosB == 2 && countLatch == 0) restart -> Locked[0][0][0][0][True][False][False][True][0]
 	| when (echosB == 2 && echosA != 2 && countLatch == 0) bEchoA -> Locked[echosA+1][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
 	| when (echosB == 2 && echosD != 2 && countLatch == 0) bEchoD -> Locked[echosA][echosB][echosC][echosD+1][canA][canB][canC][canD][countLatch]
 	| when (echosB == 2 && echosA == 2 && countLatch == 0) bEchoA -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
@@ -102,7 +102,7 @@ Locked[echosA:0..2][echosB:0..2][echosC:0..2][echosD:0..2][canA:Bool][canB:Bool]
 	| when (canC && echosA == 2 && countLatch == 0) cWakeupA -> Locked[echosA+1][echosB][echosC][echosD][True][canB][False][canD][countLatch]
 	| when (canC && echosD == 2 && countLatch == 0) cWakeupD -> Locked[echosA][echosB][echosC][echosD+1][canA][canB][False][True][countLatch]
 	| when (canC && countLatch == 0) cWakeupAD -> Locked[echosA+1][echosB][echosC][echosD+1][True][canB][False][True][countLatch]
-	| when (echosC == 2 && countLatch == 0) restart -> NodeLock
+	| when (echosC == 2 && countLatch == 0) restart -> Locked[0][0][0][0][True][False][False][True][0]
 	| when (echosC == 2 && echosA != 2 && countLatch == 0) cEchoA -> Locked[echosA+1][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
 	| when (echosC == 2 && echosD != 2 && countLatch == 0) cEchoD -> Locked[echosA][echosB][echosC][echosD+1][canA][canB][canC][canD][countLatch]
 	| when (echosC == 2 && echosA == 2 && countLatch == 0) cEchoA -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
@@ -113,7 +113,7 @@ Locked[echosA:0..2][echosB:0..2][echosC:0..2][echosD:0..2][canA:Bool][canB:Bool]
 	| when (canD && echosB == 2 && countLatch == 0) dWakeupB -> Locked[echosA][echosB][echosC][echosD][canA][True][canC][False][countLatch]
 	| when (canD && echosC == 2 && countLatch == 0) dWakeupC -> Locked[echosA][echosB][echosC][echosD][canA][canB][True][False][countLatch]
 	| when (canD && countLatch == 0) dWakeupBC -> Locked[echosA][echosB+1][echosC+1][echosD][canA][True][True][False][countLatch]
-	| when (echosD == 2 && countLatch == 0) restart -> NodeLock
+	| when (echosD == 2 && countLatch == 0) restart -> Locked[0][0][0][0][True][False][False][True][0]
 	| when (echosD == 2 && echosB != 2 && countLatch == 0) dEchoB -> Locked[echosA][echosB+1][echosC][echosD][canA][canB][canC][canD][countLatch]
 	| when (echosD == 2 && echosC != 2 && countLatch == 0) dEchoC -> Locked[echosA][echosB][echosC+1][echosD][canA][canB][canC][canD][countLatch]
 	| when (echosD == 2 && echosB == 2 && countLatch == 0) dEchoB -> Locked[echosA][echosB][echosC][echosD][canA][canB][canC][canD][countLatch]
@@ -216,7 +216,7 @@ AOk[x:0..3] = (
 	when (x == 1) aWakeupBC -> AOk[x+1] |
 	when (x == 2) aEchoB -> AOk[x+1] |
 	when (x == 2) aEchoC -> AOk[x+1] |
-	when (x >= 2) restart -> AOk[0] |
+	when (x >= 2) restart -> AOk[1] |
 	aReset -> AOk[1]).
 
 property BOk = BOk[0],
@@ -227,7 +227,7 @@ BOk[x:0..3] = (
 	when (x == 1) bWakeupAD -> BOk[x+1] |
 	when (x == 2) bEchoA -> BOk[x+1] |
 	when (x == 2) bEchoD -> BOk[x+1] |
-	when (x >= 2) restart -> BOk[0] |
+	when (x >= 2) restart -> BOk[1] |
 	bReset -> BOk[1]).
 
 property COk = COk[0],
@@ -238,7 +238,7 @@ COk[x:0..3] = (
 	when (x == 1) cWakeupAD -> COk[x+1] |
 	when (x == 2) cEchoA -> COk[x+1] |
 	when (x == 2) cEchoD -> COk[x+1] |
-	when (x >= 2) restart -> COk[0] |
+	when (x >= 2) restart -> COk[1] |
 	cReset -> COk[1]).
 
 property DOk = DOk[0],
@@ -249,7 +249,9 @@ DOk[x:0..3] = (
 	when (x == 1) dWakeupBC -> DOk[x+1] |
 	when (x == 2) dEchoB -> DOk[x+1] |
 	when (x == 2) dEchoC -> DOk[x+1] |
-	when (x >= 2) restart -> DOk[0] |
+	when (x >= 2) restart -> DOk[1] |
 	dReset -> DOk[1]).
+
+progress Lol = node.{aWakeupBC, bEchoA, bReset, bWakeupA, bWakeupD, cEchoA, cReset, cWakeupA, cWakeupD, dEchoB, dEchoC, dReset, dWakeupB, dWakeupC, restart}
 
 ||Round = (node:AStart || node:BStart || node:CStart || node:DStart || {node}::NodeLock || {node}::StrengthLock || {node}::AOk || {node}::BOk || {node}::COk || {node}::DOk).
