@@ -16,7 +16,7 @@ public class ElectionNode2 extends NodeAbstract {
 
 	private Queue<Attributes> allAttributes = new LinkedBlockingQueue<>();
 	private Map<String, Attributes> echo = Collections.synchronizedMap(new HashMap<>());
-	private Attributes election = new Attributes(true);
+	private Attributes election = null;
 	private AtomicBoolean isElectStart = new AtomicBoolean(false);
 	private AtomicBoolean isEchoStart = new AtomicBoolean(false);
 
@@ -27,7 +27,7 @@ public class ElectionNode2 extends NodeAbstract {
 			Attributes ell = new Attributes(true);
 			ell.setInitiatorName(name);
 			allAttributes.add(ell);
-			isElectStart.set(true);
+//			isElectStart.set(true);
 		}
 	}
 
@@ -81,11 +81,14 @@ public class ElectionNode2 extends NodeAbstract {
 					isEchoStart.set(false);
 				}
 
-				synchronized (this) {
+//				synchronized (allAttributes) {
 					boolean restart = false;
 					while (!restart) {
-						if (!allAttributes.isEmpty()) {
-							wait();
+						if (allAttributes.isEmpty()) {
+							synchronized (this) {
+								wait();
+							}
+							
 						}
 						Attributes poll = allAttributes.poll();
 						if (poll.isElection()) {
@@ -95,13 +98,14 @@ public class ElectionNode2 extends NodeAbstract {
 								isElectStart.set(true);
 								isEchoStart.set(false);
 							} else {
-								System.out.println(poll.getInitiatorName()+" "+election.getInitiatorName());
 								if (election.getInitiatorName().compareTo(poll.getInitiatorName()) == 0) {
 									System.out.println(this+" election  is like "+poll.getWakeupNeighbour());
-									election.getCountedEchos().set(election.getCountedEchos().get() + 1);
+									election.getCountedEchos().incrementAndGet();
 									if (poll.getData() != null) {
 										System.out.println(this+" election war echo");
 										election.setData(election.getData() + "," + poll.getData());
+									} else {
+										election.setData(this + "-" + poll.getWakeupNeighbour());
 									}
 								} else if (poll.getInitiatorName().compareTo(election.getInitiatorName()) > 0) {
 									System.out.println(this+" Election restart node with new father "+poll.getWakeupNeighbour());
@@ -115,24 +119,27 @@ public class ElectionNode2 extends NodeAbstract {
 							}
 							if (!(election.getCountedEchos().get() < neighbours.size())) {
 								if (election.getWakeupNeighbour() != null) {
+									System.out.println(this + " will call echo from " + election.getWakeupNeighbour());
 									election.getWakeupNeighbour().echo(this, election.getData(),
 											election.getInitiatorName(), true);
 								} else {
-									System.out.println(this + ": Finisched Election");
+									System.out.println(this + ": Finished Election");
 									this.wakeup(null, name, false);
 								}
 							}
 						} else {
-							if (!echo.containsKey(poll.getWakeupNeighbour().toString())) {
-								echo.put(poll.getWakeupNeighbour().toString(), poll);
+							if (!echo.containsKey(poll.getInitiatorName())) {
+								echo.put(poll.getInitiatorName(), poll);
 							} else {
-								Attributes attributes = echo.get(poll.getWakeupNeighbour().toString());
+								Attributes attributes = echo.get(poll.getInitiatorName());
 								if (poll.getInitiatorName().compareTo(attributes.getInitiatorName()) == 0) {
-									System.out.println(this+" echo updates allready known neighbour "+ poll.getWakeupNeighbour());
-									attributes.getCountedEchos().set(attributes.getCountedEchos().get());
+									System.out.println(this+" echo updates already known neighbour "+ poll.getWakeupNeighbour());
+									attributes.getCountedEchos().incrementAndGet();
 									if (poll.getData() != null) {
 										System.out.println(this+" echo is an echo of echo "+ poll.getWakeupNeighbour());
 										attributes.setData(attributes.getData() + "," + poll.getData());
+									} else {
+										attributes.setData(this + "-" + poll.getWakeupNeighbour());
 									}
 								} else if (poll.getInitiatorName().compareTo(attributes.getInitiatorName()) > 0) {
 									System.out.println(this+" nobody cares about the strength at echo");
@@ -160,7 +167,7 @@ public class ElectionNode2 extends NodeAbstract {
 						}
 
 					}
-				}
+//				}
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
