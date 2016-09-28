@@ -8,64 +8,68 @@ range Bool = False..True
 const CountMax = 4
 
 AStart = (aStartNode -> AInNode[0]),
+AReset = (aStartNode -> AInNode[1]),
 AStNode[x:0..3] = ( 
 	when (x == 0) aSetupNeighbors -> aHelloB -> aHelloC -> AStNode[x+1] |
 	when (x == 1) aWakeupB -> AStNode[x+1] | 
 	when (x == 1) aWakeupC -> AStNode[x+1] |
 	when (x == 2) aEchoB -> AStNode[x+1] |
 	when (x == 2) aEchoC -> AStNode[x+1] |
-	when (x == 3) restart -> AStNode[1] |
+	when (x == 3) restart -> AReset |
 	aReset -> AStNode[1]),
 AInNode[x:0..2] = (
 	when (x == 0) aSetupNeighbors -> aHelloB -> aHelloC -> AInNode[x+1] |
 	when (x == 1) aWakeupBC -> AInNode[x+1] | 
-	when (x == 2) restart -> AInNode[1] |
+	when (x == 2) restart -> AReset |
 	aReset -> AStNode[1]).
 
 BStart = (bStartNode -> BStNode[0]),
+BReset = (bStartNode -> BStNode[1]),
 BStNode[x:0..3] = (
 	when (x == 0) bSetupNeighbors -> bHelloA -> bHelloD -> BStNode[x+1] |
 	when (x == 1) bWakeupA -> BStNode[x+1] | 
 	when (x == 1) bWakeupD -> BStNode[x+1] |
 	when (x == 2) bEchoA -> BStNode[x+1] |
 	when (x == 2) bEchoD -> BStNode[x+1] |
-	when (x == 3) restart -> BStNode[1] |
+	when (x == 3) restart -> BReset |
 	bReset -> BStNode[1]),
 BInNode[x:0..2] = (
 	when (x == 0) bSetupNeighbors -> bHelloA -> bHelloD -> BInNode[x+1] |
 	when (x == 1) bWakeupAD -> BInNode[x+1] | 
-	when (x == 2) restart -> BInNode[1] |
+	when (x == 2) restart -> BReset |
 	bReset -> BStNode[1]).
 
 CStart = (cStartNode -> CStNode[0]),
+CReset = (cStartNode -> CStNode[1]),
 CStNode[x:0..3] = (
 	when (x == 0) cSetupNeighbors -> cHelloD -> cHelloA -> CStNode[x+1] |
 	when (x == 1) cWakeupA -> CStNode[x+1] |
 	when (x == 1) cWakeupD -> CStNode[x+1] |
 	when (x == 2) cEchoA -> CStNode[x+1] | 
 	when (x == 2) cEchoD -> CStNode[x+1] |
-	when (x == 3) restart -> CStNode[1] |
+	when (x == 3) restart -> CReset |
 	cReset -> CStNode[1]),
 CInNode[x:0..2] = (
 	when (x == 0) cSetupNeighbors -> cHelloD -> cHelloA -> CInNode[x+1] |
 	when (x == 1) cWakeupAD -> CInNode[x+1] | 
-	when (x == 2) restart -> CStNode[1] |
+	when (x == 2) restart -> CReset |
 	cReset -> CStNode[1]).
 
 
 DStart = (dStartNode -> DInNode[0]),
+DReset = (dStartNode -> DInNode[1]),
 DStNode[x:0..3] = (
 	when (x == 0) dSetupNeighbors -> dHelloC -> dHelloB -> DStNode[x+1] |
 	when (x == 1) dWakeupB -> DStNode[x+1] |
 	when (x == 1) dWakeupC -> DStNode[x+1] |
 	when (x == 2) dEchoB -> DStNode[x+1] | 
 	when (x == 2) dEchoC -> DStNode[x+1] |
-	when (x == 3) restart -> DStNode[1] |
+	when (x == 3) restart -> DReset |
 	dReset -> DStNode[1]),
 DInNode[x:0..2] = (
 	when (x == 0) dSetupNeighbors -> dHelloC -> dHelloB -> DInNode[x+1] |
 	when (x == 1) dWakeupBC -> DInNode[x+1] | 
-	when (x == 2) restart -> DInNode[1] |
+	when (x == 2) restart -> DReset |
 	dReset -> DStNode[1]).
 
 NodeLock = Locked[0][0][0][0][True][False][False][True][4],
