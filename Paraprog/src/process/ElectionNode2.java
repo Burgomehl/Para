@@ -130,6 +130,10 @@ public class ElectionNode2 extends NodeAbstract {
 						} else {
 							if (!echo.containsKey(poll.getInitiatorName())) {
 								echo.put(poll.getInitiatorName(), poll);
+								restart = true;
+								isElectStart.set(false);
+								isEchoStart.set(true);
+								restartEcho = poll;
 							} else {
 								Attributes attributes = echo.get(poll.getInitiatorName());
 								if (poll.getInitiatorName().compareTo(attributes.getInitiatorName()) == 0) {
