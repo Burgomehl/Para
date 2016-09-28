@@ -10,7 +10,6 @@ public class Attributes {
 
 	private String initiatorName;
 	private AtomicBoolean restart = new AtomicBoolean(false);
-	private boolean echo = false;
 	private boolean isElection;
 	
 	public Attributes(boolean isElection) {
@@ -49,24 +48,22 @@ public class Attributes {
 		this.restart = restart;
 	}
 
-	public boolean isEcho() {
-		return echo;
-	}
-
-	public void setEcho(boolean echo) {
-		this.echo = echo;
-	}
-
 	public synchronized String getInitiatorName() {
+//		System.out.println("get initiatorname "+initiatorName);
 		return initiatorName;
 	}
 
 	public synchronized void setInitiatorName(String initiatorName) {
+		System.out.println("set initiatorname "+initiatorName +" last "+ this.initiatorName);
 		this.initiatorName = initiatorName;
 	}
 	
 	@Override
 	public String toString() {
-		return (isElection?"ElectionAttribute":"EchoAttribute");
+		return (isElection?"ElectionAttribute: ":"EchoAttribute: ") + initiatorName+" counted "+ countedEchos;
+	}
+
+	public boolean isElection() {
+		return isElection;
 	}
 }
