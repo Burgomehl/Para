@@ -30,7 +30,7 @@ public class ElectionNode extends NodeAbstract {
 
 	@Override
 	public synchronized void wakeup(Node neighbour, String initiatorName, boolean isElection) {
-		System.out.println(this + " test "+ isElection);
+		System.out.println(this + " test " + isElection);
 		if (isElection) {
 			actual = election;
 			synchronized (election) {
@@ -49,19 +49,23 @@ public class ElectionNode extends NodeAbstract {
 					System.out
 							.println(this + " has incremented counter in wakeup to " + actual.getCountedEchos().get());
 				}
-				System.out.println(this+": "+initiatorName.equals(actual.getInitiatorName())+" passedName:"+initiatorName+"/ currentName:"+actual.getInitiatorName());
+				System.out.println(this + ": " + initiatorName.equals(actual.getInitiatorName()) + " passedName:"
+						+ initiatorName + "/ currentName:" + actual.getInitiatorName());
 			}
 		} else {
+			System.out.println(this + " echo wakeup");
 			if (!echo.containsKey(initiatorName)) {
+				System.out.println(this + " ich bin drin");
 				Attributes att = new Attributes(false);
 				att.setInitiatorName(initiatorName);
 				att.getRestart().set(true);
+				att.setWakeupNeighbour(neighbour);
 				echo.put(initiatorName, att);
 			}
+			System.out.println(this + " goon echo");
 			actual = echo.get(initiatorName);
-			actual.setWakeupNeighbour(neighbour);
 			actual.getCountedEchos().incrementAndGet();
-			actual.setInitiatorName(initiatorName);
+//			actual.setInitiatorName(initiatorName);
 		}
 		System.out.println(this + ": Wakeup actual: " + actual);
 
@@ -81,11 +85,13 @@ public class ElectionNode extends NodeAbstract {
 				do {
 
 					restart(election, true);
-					echo.forEach((name, att) -> restart(att, false));
+					for (Attributes att : echo.values()) {
+						restart(att, false);
+					}
 					synchronized (this) {
 						while ((election.getCountedEchos().get() < neighbours.size() && !election.getRestart().get())
-								&& (echo.isEmpty() || echo.values().stream()
-										.anyMatch(att -> (!att.getRestart().get() && att.getCountedEchos().get() < neighbours.size())))) {
+								&& (echo.isEmpty() || echo.values().stream().anyMatch(att -> (!att.getRestart().get()
+										&& att.getCountedEchos().get() < neighbours.size())))) {
 							try {
 								wait();
 								System.out.println(this + ":" + actual.getCountedEchos().get() + "/" + neighbours.size()
@@ -106,9 +112,11 @@ public class ElectionNode extends NodeAbstract {
 						System.out
 								.println(this + " -> set actual to " + actual + " with a echo size  of " + echo.size());
 						echo.forEach((key, att) -> System.out.println(this + "echo content " + att));
+						System.out.println((election.getRestart().get()+" || "+(election.getCountedEchos().get() < neighbours.size()))+
+						" || "+(echo.isEmpty())+" || "+(echo.values().stream().anyMatch(att -> att.getRestart().get())));
 					}
-				} while (election.getRestart().get() || election.getCountedEchos().get() < neighbours.size() || (!echo.isEmpty() || echo.values().stream()
-						.anyMatch(att -> att.getRestart().get() )));
+				} while ((election.getRestart().get() || election.getCountedEchos().get() < neighbours.size())
+						&& !(echo.isEmpty() || !echo.values().stream().anyMatch(att -> att.getRestart().get())));
 				synchronized (this) {
 					boolean isElection = false;
 					if (actual == null) {
@@ -140,6 +148,7 @@ public class ElectionNode extends NodeAbstract {
 								+ "/" + neighbours.size());
 						System.out.println(this + " going to echo:  " + echo.values().stream()
 								.anyMatch(att -> att.getCountedEchos().get() < neighbours.size()));
+						System.out.println(this+" "+actual.getWakeupNeighbour());
 						actual.getWakeupNeighbour().echo(this,
 								actual.getWakeupNeighbour() + "-" + this
 										+ (actual.getData() != null ? "," + actual.getData() : ""),

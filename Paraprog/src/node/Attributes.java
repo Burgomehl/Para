@@ -25,6 +25,7 @@ public class Attributes {
 	}
 
 	public Node getWakeupNeighbour() {
+		System.out.println("wakeupneighbour "+wakeupNeighbour+" get echo --> initiatorname "+initiatorName +" last "+ this.initiatorName);
 		return wakeupNeighbour;
 	}
 
