@@ -25,7 +25,7 @@ public class Attributes {
 	}
 
 	public Node getWakeupNeighbour() {
-		System.out.println("wakeupneighbour "+wakeupNeighbour+" get echo --> initiatorname "+initiatorName +" last "+ this.initiatorName);
+//		System.out.println("wakeupneighbour "+wakeupNeighbour+" get echo --> initiatorname "+initiatorName +" last "+ this.initiatorName);
 		return wakeupNeighbour;
 	}
 
@@ -55,7 +55,7 @@ public class Attributes {
 	}
 
 	public synchronized void setInitiatorName(String initiatorName) {
-		System.out.println("set initiatorname "+initiatorName +" last "+ this.initiatorName);
+//		System.out.println("set initiatorname "+initiatorName +" last "+ this.initiatorName);
 		this.initiatorName = initiatorName;
 	}
 	
