@@ -6,27 +6,27 @@ const CountMax = 4
 AStart = ANode[0],
 ANode[x:0..2] = (when (x == 0) aSetupNeighbors -> aHelloB -> aHelloC -> ANode[x+1] |
 				 when (x == 1) aWakeupB -> aWakeupC -> ANode[x+1] | 
-				 when (x == 2) ende -> restart -> AStart).
+				 when (x == 2) ende -> restart -> ANode[1]).
 
 BStart = BNode[0],
 BNode[x:0..3] = (when (x == 0) bSetupNeighbors -> bHelloA -> bHelloD -> BNode[x+1] |
 				 when (x == 1) bWakeupD -> BNode[x+1] | 
 				 when (x == 2) bEchoA -> BNode[x+1] |
-				 when (x == 3) restart -> BStart).
+				 when (x == 3) restart -> BNode[1]).
 
 CStart = CNode[0],
 CNode[x:0..3] = (when (x == 0) cSetupNeighbors -> cHelloD -> cHelloA -> CNode[x+1] |
 				 when (x == 1) cWakeupD -> CNode[x+1] | 
 				 when (x == 2) cEchoA -> CNode[x+1] |
-				 when (x == 3) restart -> CStart).
+				 when (x == 3) restart -> CNode[1]).
 
 DStart = DNode[0],
 DNode[x:0..3] = (when (x == 0) dSetupNeighbors -> dHelloC -> dHelloB -> DNode[x+1] |
 				 when (x == 1) dWakeupC -> DNode[x+1] | 
 				 when (x == 2) dEchoB -> DNode[x+1] |
-				 when (x == 3) restart -> DStart).
+				 when (x == 3) restart -> DNode[1]).
 
-progress Restart = {restart}
+progress Pro = a.{aWakeupB, aWakeupC, bEchoA, bWakeupD, cEchoA, cWakeupD, dEchoB, dWakeupC, ende, restart}
 
 NodeLock = Locked[0][0][0][0][True][False][False][False][0],
 
@@ -40,7 +40,7 @@ Locked[echosA:0..2][echosB:0..2][echosC:0..2][echosD:0..2][canA:Bool][canB:Bool]
 	| when (canA && countLatch == CountMax)
 		aWakeupB -> aWakeupC -> Locked[echosA][echosB+1][echosC+1][echosD][False][True][True][canD][countLatch]
 	| when (echosA == 2 && countLatch == CountMax)
-		ende -> restart -> NodeLock
+		ende -> restart -> Locked[0][0][0][0][True][False][False][False][4]
 
 	| when (canB && countLatch == CountMax)
 		bWakeupD -> Locked[echosA][echosB][echosC][echosD+1][canA][False][canC][True][countLatch]
@@ -57,4 +57,31 @@ Locked[echosA:0..2][echosB:0..2][echosC:0..2][echosD:0..2][canA:Bool][canB:Bool]
 	| when (echosD == 2 && countLatch == CountMax)
 		dEchoB -> Locked[echosA][echosB+1][echosC][echosD][canA][canB][canC][canD][countLatch]).
 
-||Round = (a:AStart || a:BStart || a:CStart || a:DStart || {a}::NodeLock).
+property AOk = AOk[0],
+AOk[x:0..3] = (
+	when (x == 0) aSetupNeighbors -> aHelloB -> aHelloC -> AOk[x+1] |
+	when (x == 1) aWakeupB -> aWakeupC -> AOk[x+1] |
+	when (x == 2) ende -> restart -> AOk[1]).
+
+property BOk = BOk[0],
+BOk[x:0..3] = (
+	when (x == 0) bSetupNeighbors -> bHelloA -> bHelloD -> BOk[x+1] |
+	when (x == 1) bWakeupD -> BOk[x+1] |
+	when (x == 2) bEchoA -> BOk[x+1] |
+	when (x == 3) restart -> BOk[1]).
+
+property COk = COk[0],
+COk[x:0..3] = (
+	when (x == 0) cSetupNeighbors -> cHelloD -> cHelloA -> COk[x+1] |
+	when (x == 1) cWakeupD -> COk[x+1] |
+	when (x == 2) cEchoA -> COk[x+1] |
+	when (x == 3) restart -> COk[1]).
+
+property DOk = DOk[0],
+DOk[x:0..3] = (
+	when (x == 0) dSetupNeighbors -> dHelloC -> dHelloB -> DOk[x+1] |
+	when (x == 1) dWakeupC -> DOk[x+1] |
+	when (x == 2) dEchoB -> DOk[x+1] |
+	when (x == 3) restart -> DOk[1]).
+
+||Round = (a:AStart || a:BStart || a:CStart || a:DStart || {a}::NodeLock || {a}::AOk || {a}::BOk || {a}::COk || {a}::DOk).
