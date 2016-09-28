@@ -41,11 +41,11 @@ public class Attributes {
 		this.data = data;
 	}
 
-	public AtomicBoolean getRestart() {
+	public synchronized AtomicBoolean getRestart() {
 		return restart;
 	}
 
-	public void setRestart(AtomicBoolean restart) {
+	public synchronized void setRestart(AtomicBoolean restart) {
 		this.restart = restart;
 	}
 

@@ -31,21 +31,24 @@ public class ElectionNode extends NodeAbstract {
 	public synchronized void wakeup(Node neighbour, String initiatorName, boolean isElection) {
 		System.out.println(this + " test " + isElection);
 		if (isElection) {
-			synchronized (election) {
-				if (election.getInitiatorName() == null || initiatorName.compareTo(election.getInitiatorName()) > 0) {
-					election.getRestart().set(true);
-					election.setInitiatorName(initiatorName);
-					election.setData(null);
-					election.getCountedEchos().set(0);
-					election.setWakeupNeighbour(neighbour);
-				}
-
-				if (initiatorName.equals(election.getInitiatorName())) {
-					election.getCountedEchos().incrementAndGet();
-				}
-				System.out.println(this + " received wakeup from " + neighbour + "counter: " + election.getCountedEchos().get()
-						+ "|" + neighbours.size() + " neustart: " + election.getRestart().get());
+//			System.out.println(this + "election go");
+			if (election.getInitiatorName() == null || initiatorName.compareTo(election.getInitiatorName()) > 0) {
+//				System.out.println(this + "setnew data for election");
+				election.getRestart().set(true);
+				election.setInitiatorName(initiatorName);
+				election.setData(null);
+				election.getCountedEchos().set(0);
+				election.setWakeupNeighbour(neighbour);
+//				System.out.println(this + " have set data for election");
 			}
+
+			System.out.println(this+": "+initiatorName +"  "+ election.getInitiatorName());
+			if (initiatorName.equals(election.getInitiatorName())) {
+				election.getCountedEchos().incrementAndGet();
+			}
+			System.out.println(
+					this + " received wakeup from " + neighbour + "counter: " + election.getCountedEchos().get() + "|"
+							+ neighbours.size() + " neustart: " + election.getRestart().get());
 		} else {
 			if (!echo.containsKey(initiatorName)) {
 				Attributes att = new Attributes(false);
@@ -56,11 +59,12 @@ public class ElectionNode extends NodeAbstract {
 			}
 			Attributes actual = echo.get(initiatorName);
 			actual.getCountedEchos().incrementAndGet();
-			
-			System.out.println(this + " received wakeup from " + neighbour + "counter: " + actual.getCountedEchos().get()
-					+ "|" + neighbours.size() + " neustart: " + actual.getRestart().get());
+
+			System.out
+					.println(this + " received wakeup from " + neighbour + "counter: " + actual.getCountedEchos().get()
+							+ "|" + neighbours.size() + " neustart: " + actual.getRestart().get());
 		}
-		
+
 		if (State.NEW == this.getState()) {
 			start();
 		}
@@ -88,23 +92,23 @@ public class ElectionNode extends NodeAbstract {
 										&& (election.getInitiatorName() == null
 												|| name.compareTo(election.getInitiatorName()) >= 0)) {
 									System.out.println(this + " timed restart");
-									election.getCountedEchos().set(0);
-									election.setWakeupNeighbour(null);
-									election.setData(null);
-									election.getRestart().set(true);
-									election.setInitiatorName(name);
+									resetAttribute();
 								}
+//								System.out.println(this + " innere schleife ");
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
 						}
+
 						actual = null;
 						echo.values().stream().filter(att -> !(att.getCountedEchos().get() < neighbours.size()))
 								.findFirst().ifPresent(att -> actual = att);
+						// System.out.println(this + " vor restart");
 					}
 				} while ((election.getRestart().get() || election.getCountedEchos().get() < neighbours.size())
 						&& !(echo.isEmpty() || !echo.values().stream().anyMatch(att -> att.getRestart().get())));
 				synchronized (this) {
+//					System.out.println(this + "nach while");
 					boolean isElection = false;
 					if (actual == null) {
 						actual = election;
@@ -112,16 +116,19 @@ public class ElectionNode extends NodeAbstract {
 					}
 					if (initiator && actual.getWakeupNeighbour() == null) {
 						if (isElection) {
-							System.out.println("Fertig: " + this + " wurde gewählt " + election.getCountedEchos().get());
-							election.getRestart().set(false);
+							System.out
+									.println("Fertig: " + this + " wurde gewählt " + election.getCountedEchos().get());
+							System.out.println(this+ ": "+election.getData());
 							Attributes attributes = new Attributes(false);
 							attributes.getRestart().set(true);
 							attributes.setInitiatorName(election.getInitiatorName());
-							echo.put(election.getInitiatorName(), attributes);
+							echo.put(name, attributes);
+							started.clear();
+							election.getRestart().set(false);
 							election.getCountedEchos().set(0);
 							election.setData(null);
-							
-//							election.setInitiatorName(null);
+//							started = new HashMap<>();
+							// election.setInitiatorName(null);
 						} else {
 							System.out.println("Fertig: " + actual.getData());
 							if (actual.getData() != null) {
@@ -129,8 +136,10 @@ public class ElectionNode extends NodeAbstract {
 										"Ausgabenmenge: " + (((String) (actual.getData())).split(",").length + 1));
 							}
 							echo.remove(actual.getInitiatorName());
+//							System.exit(0);
 						}
 					} else {
+						System.out.println(this+" "+ actual);
 						System.out.println(this + " " + actual.getWakeupNeighbour());
 						actual.getWakeupNeighbour().echo(this,
 								actual.getWakeupNeighbour() + "-" + this
@@ -139,8 +148,8 @@ public class ElectionNode extends NodeAbstract {
 						actual.getCountedEchos().set(0);
 						actual.setData("");
 						actual.getRestart().set(false);
-						actual.setWakeupNeighbour(null);
-//						actual.setInitiatorName(null);
+//						actual.setWakeupNeighbour(null);
+						// actual.setInitiatorName(null);
 					}
 				}
 
@@ -150,22 +159,34 @@ public class ElectionNode extends NodeAbstract {
 		}
 	}
 
-	private void restart(Attributes att, boolean isElection) {
-		if (att.getRestart().getAndSet(false)) {
-			if (initiator) {
-				System.out.println(this + " started " + (isElection ? "Election" : "Echo"));
+	public synchronized void echo(Node neighbour, Object data, String initiatorName, boolean isElection) {
+		Attributes actual = isElection ? election : echo.get(initiatorName);
+		System.out.println(actual + " " + isElection);
+		if (!isElection || actual.getInitiatorName().equals(initiatorName)) {
+			if (actual.getData() == null) {
+				actual.setData(data);
+			} else {
+				actual.setData(data + "," + actual.getData());
 			}
-			System.out.println(this + " start/restart");
-			for (Node node : neighbours) {
-				String initiatorName;
-				synchronized (election) {
-					if (att.getRestart().get()) {
-						break;
-					}
-					initiatorName = new String(att.getInitiatorName());
-				}
-				if (node != att.getWakeupNeighbour()) {
-					node.wakeup(this, initiatorName, isElection);
+			System.out.println("echo von " + neighbour + " an " + this +" " + (actual.getCountedEchos().get()+1));
+			actual.getCountedEchos().incrementAndGet();
+			notifyAll();
+		} else {
+			System.out.println(this + " echo ging daneben " + actual.getInitiatorName() + "/" + initiatorName);
+		}
+	}
+
+	Map<Node, String> started = new HashMap<>();
+	
+	private void restart(Attributes att, boolean isElection) {
+		for (Node node : neighbours) {
+			if (node != att.getWakeupNeighbour()) {
+				if (!started.containsKey(node) || started.get(node).compareTo(att.getInitiatorName()) != 0) {
+					att.getRestart().set(false);
+//					System.out.println(this + "re-/start now oldvalue := " + started.get(node));
+					node.wakeup(this, att.getInitiatorName(), isElection);
+					started.put(node, att.getInitiatorName());
+//					System.out.println(this + " re-/started node " + node);
 				}
 			}
 		}
@@ -182,26 +203,28 @@ public class ElectionNode extends NodeAbstract {
 				+ " neighbours");
 		startLatch.countDown();
 	}
-
-	public synchronized void echo(Node neighbour, Object data, String initiatorName, boolean isElection) {
-		Attributes actual = isElection ? election : echo.get(initiatorName);
-		System.out.println(actual+ " "+ isElection);
-		if (!isElection || actual.getInitiatorName().equals(initiatorName)) {
-			if (actual.getData() == null) {
-				actual.setData(data);
-			} else {
-				actual.setData(data + "," + actual.getData());
-			}
-			System.out.println("echo von " + neighbour + " an " + this);
-			actual.getCountedEchos().incrementAndGet();
-			notifyAll();
-		} else {
-			System.out.println(this + " echo ging daneben " + actual.getInitiatorName() + "/" + initiatorName);
-		}
-	}
-
 	@Override
 	public String toString() {
 		return super.toString() + "(" + election.getInitiatorName() + ")";
+	}
+
+	@Override
+	public int hashCode() {
+		return name.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object arg0) {
+		if (arg0 instanceof ElectionNode) {
+			return this.hashCode() == arg0.hashCode();
+		}
+		return false;
+	}
+	private void resetAttribute() {
+		election.getCountedEchos().set(0);
+		election.setWakeupNeighbour(null);
+		election.setData(null);
+		election.getRestart().set(true);
+		election.setInitiatorName(name);
 	}
 }
